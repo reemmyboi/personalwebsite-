@@ -94,19 +94,22 @@ h1{
 .tree-container{
     position:relative;
     width:100%;
-    height:700px;
-    margin-top:20px;
+    height:780px;
+    margin-top:30px;
 }
 
 /* Tree image */
 .tree-img{
     position:absolute;
-    top:0;
+    bottom:0;                 /* anchor trunk */
     left:50%;
     transform:translateX(-50%);
-    width:100%;
-    max-width:600px;
-    opacity:.9;
+    width:85%;
+    max-width:560px;
+    height:auto;
+    object-fit:contain;
+    opacity:.95;
+    pointer-events:none;
 }
 
 /* Link nodes styled like fruit */
@@ -214,47 +217,51 @@ footer{
             <!-- TREE IMAGE -->
             <img src="image.png" class="tree-img">
 
-            <!-- BUTTONS (placed on branches) -->
-            <a href="https://www.instagram.com/reemmydevs/"
-               target="_blank"
-               class="link-node"
-               style="top:120px; left:20%;">
-               📸 Instagram
-            </a>
+           <!-- TOP SPLIT (main canopy fork) -->
+<a href="https://www.instagram.com/reemmydevs/"
+   target="_blank"
+   class="link-node"
+   style="top:110px; left:34%; transform:translate(-50%, -50%);">
+   📸 Instagram
+</a>
 
-            <a href="#"
-               class="link-node"
-               style="top:140px; right:20%;">
-               🎵 TikTok
-            </a>
+<a href="#"
+   class="link-node"
+   style="top:110px; left:66%; transform:translate(-50%, -50%);">
+   🎵 TikTok
+</a>
 
-            <a href="https://www.youtube.com/channel/UCuhYpmyhSwhuAVxGsIc_nqg"
-               target="_blank"
-               class="link-node"
-               style="top:260px; left:18%;">
-               ▶️ YouTube
-            </a>
 
-            <a href="https://x.com/reemmyboi"
-               target="_blank"
-               class="link-node"
-               style="top:280px; right:18%;">
-               🐦 X
-            </a>
+<!-- UPPER BRANCH INTERSECTIONS -->
+<a href="https://www.youtube.com/channel/UCuhYpmyhSwhuAVxGsIc_nqg"
+   target="_blank"
+   class="link-node"
+   style="top:210px; left:22%; transform:translate(-50%, -50%);">
+   ▶️ YouTube
+</a>
 
-            <a href="https://discord.gg/GuwnDvrFDR"
-               target="_blank"
-               class="link-node"
-               style="top:400px; left:22%;">
-               👾 Discord
-            </a>
+<a href="https://x.com/reemmyboi"
+   target="_blank"
+   class="link-node"
+   style="top:210px; left:78%; transform:translate(-50%, -50%);">
+   🐦 X
+</a>
 
-            <a href="https://www.twitch.tv/reemmy_"
-               target="_blank"
-               class="link-node"
-               style="top:420px; right:22%;">
-               🎮 Twitch
-            </a>
+
+<!-- MID BRANCH SPLITS -->
+<a href="https://discord.gg/GuwnDvrFDR"
+   target="_blank"
+   class="link-node"
+   style="top:330px; left:18%; transform:translate(-50%, -50%);">
+   👾 Discord
+</a>
+
+<a href="https://www.twitch.tv/reemmy_"
+   target="_blank"
+   class="link-node"
+   style="top:330px; left:82%; transform:translate(-50%, -50%);">
+   🎮 Twitch
+</a>
 
         </div>
     </div>
