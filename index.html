@@ -339,7 +339,21 @@ footer{
         <p class="subtitle">
             Thoughts, updates, and random stuff ✨
         </p>
-
+<input 
+    type="text" 
+    id="searchBar" 
+    placeholder="Search blogs..." 
+    onkeyup="searchBlogs()"
+    style="
+        width:100%;
+        padding:12px;
+        margin-bottom:15px;
+        border-radius:10px;
+        border:none;
+        background:#020617;
+        color:white;
+    "
+>
         <!-- CONTROLS -->
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
             <button onclick="sortBlogs('new')">Newest</button>
@@ -401,6 +415,40 @@ footer{
 
         </div>
     </div>
+<div class="blog-preview" 
+     data-date="2026-06-20" 
+     data-tags="health"
+     onclick="openBlog(this)">
+
+    <img src="https://picsum.photos/800/400?random=1" class="blog-img">
+
+    <h2>Getting Back Into Shape</h2>
+
+    <p class="summary">
+        Starting small with daily workouts and consistency.
+    </p>
+
+    <p class="tags">#health</p>
+
+    <!-- FULL BLOG DATA -->
+    <div class="full-content">
+        <h1>Getting Back Into Shape</h1>
+        <img src="https://picsum.photos/800/400?random=1" class="blog-img-full">
+        <p>
+            Recently I've been trying to rebuild my routine...
+        </p>
+    </div>
+</div>
+    <section id="blogPost" class="page">
+    <div class="card">
+
+        <button onclick="showPage('blogs')" style="margin-bottom:20px;">
+            ⬅ Back
+        </button>
+
+        <div id="blogContent"></div>
+
+    </div>
 </section>
     .blog-preview{
     background:#020617;
@@ -408,27 +456,39 @@ footer{
     padding:15px;
     margin-bottom:15px;
     cursor:pointer;
-    transition:.25s;
+    transition:.3s;
+    opacity:0;
+    transform:translateY(20px);
+    animation:fadeIn .5s forwards;
 }
 
 .blog-preview:hover{
+    transform:translateY(-5px) scale(1.01);
     background:#1e293b;
 }
 
-.summary{
-    color:#94a3b8;
-    margin:5px 0;
+@keyframes fadeIn{
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
 }
 
-.tags{
-    font-size:.85rem;
-    color:#60a5fa;
+.blog-img{
+    width:100%;
+    border-radius:10px;
+    margin-bottom:10px;
 }
 
+.blog-img-full{
+    width:100%;
+    border-radius:10px;
+    margin:15px 0;
+}
+
+/* Smooth expand (if used later) */
 .full-content{
     display:none;
-    margin-top:10px;
-    color:#cbd5f5;
 }
 <script>
 function showPage(pageId){
@@ -441,15 +501,24 @@ function showPage(pageId){
 }
 </script>
 <script>
-// TOGGLE FULL BLOG
-document.querySelectorAll('.blog-preview').forEach(blog=>{
-    blog.addEventListener('click', ()=>{
-        const content = blog.querySelector('.full-content');
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    });
-});
+// OPEN FULL BLOG PAGE
+function openBlog(blog){
+    const content = blog.querySelector('.full-content').innerHTML;
+    document.getElementById('blogContent').innerHTML = content;
+    showPage('blogPost');
+}
 
-// SORTING
+// SEARCH
+function searchBlogs(){
+    const input = document.getElementById('searchBar').value.toLowerCase();
+
+    document.querySelectorAll('.blog-preview').forEach(blog=>{
+        const text = blog.innerText.toLowerCase();
+        blog.style.display = text.includes(input) ? 'block' : 'none';
+    });
+}
+
+// SORT
 function sortBlogs(type){
     const container = document.getElementById('blogList');
     const blogs = Array.from(container.children);
@@ -457,14 +526,13 @@ function sortBlogs(type){
     blogs.sort((a,b)=>{
         const dateA = new Date(a.dataset.date);
         const dateB = new Date(b.dataset.date);
-
         return type === 'new' ? dateB - dateA : dateA - dateB;
     });
 
     blogs.forEach(blog => container.appendChild(blog));
 }
 
-// FILTERING
+// FILTER
 function filterBlogs(category){
     document.querySelectorAll('.blog-preview').forEach(blog=>{
         if(category === 'all'){
