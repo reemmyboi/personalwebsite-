@@ -203,6 +203,7 @@ footer{
     <button onclick="showPage('media')">🌳 Media Tree</button>
     <button onclick="showPage('about')">📝 About Me</button>
     <button onclick="showPage('wishlist')">🎁 Wishlist</button>
+    <button onclick="showPage('blogs')">📰 Blogs</button>
 </nav>
 
 <!-- MEDIA TREE -->
@@ -330,7 +331,105 @@ footer{
     If you can't see the Amazon wishlist its likely cause you aren't in America
     All I have anything is a giftcard donation thing anyways lol
 </footer>
+<!-- BLOGS -->
+<section id="blogs" class="page">
+    <div class="card">
+        <h1>Blogs</h1>
 
+        <p class="subtitle">
+            Thoughts, updates, and random stuff ✨
+        </p>
+
+        <!-- CONTROLS -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
+            <button onclick="sortBlogs('new')">Newest</button>
+            <button onclick="sortBlogs('old')">Oldest</button>
+
+            <button onclick="filterBlogs('all')">All</button>
+            <button onclick="filterBlogs('health')">Health</button>
+            <button onclick="filterBlogs('television')">Television</button>
+        </div>
+
+        <!-- BLOG LIST -->
+        <div id="blogList">
+
+            <!-- BLOG 1 -->
+            <div class="blog-preview" data-date="2026-06-20" data-tags="health">
+                <h2>Getting Back Into Shape</h2>
+                <p class="summary">Starting small with daily workouts and consistency.</p>
+                <p class="tags">#health</p>
+                <div class="full-content">
+                    <p>
+                        Recently I've been trying to rebuild my routine. Even just 15–20 minutes
+                        a day has been helping a lot. Consistency > intensity.
+                    </p>
+                </div>
+            </div>
+<div class="blog-preview" data-date="2026-06-25" data-tags="health">
+    <h2>My New Blog676767</h2>
+    <p class="summary">Short preview goes here67667.</p>
+    <p class="tags">#health</p>
+    <div class="full-content">
+        <p>Full blog content goes here..676767.</p>
+    </div>
+</div>
+            <!-- BLOG 2 -->
+            <div class="blog-preview" data-date="2026-06-15" data-tags="television">
+                <h2>Show I’ve Been Watching</h2>
+                <p class="summary">A quick take on a series I got hooked on.</p>
+                <p class="tags">#television</p>
+                <div class="full-content">
+                    <p>
+                        Been watching a new series lately and honestly it's way better than expected.
+                        The pacing and characters are solid.
+                    </p>
+                </div>
+            </div>
+
+            <!-- BLOG 3 -->
+            <div class="blog-preview" data-date="2026-06-10" data-tags="health television">
+                <h2>Balancing Screen Time</h2>
+                <p class="summary">Trying to balance entertainment and productivity.</p>
+                <p class="tags">#health #television</p>
+                <div class="full-content">
+                    <p>
+                        Watching shows is fun, but I’ve been working on limiting binge sessions
+                        and staying productive during the day.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+    .blog-preview{
+    background:#020617;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.blog-preview:hover{
+    background:#1e293b;
+}
+
+.summary{
+    color:#94a3b8;
+    margin:5px 0;
+}
+
+.tags{
+    font-size:.85rem;
+    color:#60a5fa;
+}
+
+.full-content{
+    display:none;
+    margin-top:10px;
+    color:#cbd5f5;
+}
 <script>
 function showPage(pageId){
 
@@ -341,6 +440,40 @@ function showPage(pageId){
         .classList.add('active');
 }
 </script>
+<script>
+// TOGGLE FULL BLOG
+document.querySelectorAll('.blog-preview').forEach(blog=>{
+    blog.addEventListener('click', ()=>{
+        const content = blog.querySelector('.full-content');
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    });
+});
 
+// SORTING
+function sortBlogs(type){
+    const container = document.getElementById('blogList');
+    const blogs = Array.from(container.children);
+
+    blogs.sort((a,b)=>{
+        const dateA = new Date(a.dataset.date);
+        const dateB = new Date(b.dataset.date);
+
+        return type === 'new' ? dateB - dateA : dateA - dateB;
+    });
+
+    blogs.forEach(blog => container.appendChild(blog));
+}
+
+// FILTERING
+function filterBlogs(category){
+    document.querySelectorAll('.blog-preview').forEach(blog=>{
+        if(category === 'all'){
+            blog.style.display = 'block';
+        } else {
+            blog.style.display = blog.dataset.tags.includes(category) ? 'block' : 'none';
+        }
+    });
+}
+</script>
 </body>
 </html>
