@@ -538,11 +538,22 @@ box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
 <script>
 function showPage(pageId){
 
-    document.querySelectorAll('.page')
-        .forEach(page => page.classList.remove('active'));
+    const pages = document.querySelectorAll('.page');
 
-    document.getElementById(pageId)
-        .classList.add('active');
+    pages.forEach(page => {
+        page.style.display = "none";
+        page.classList.remove('active');
+    });
+
+    const activePage = document.getElementById(pageId);
+
+    if(activePage){
+        activePage.style.display = "block";
+        activePage.classList.add('active');
+    }
+
+    // scroll reset
+    window.scrollTo({ top: 0, behavior: "instant" });
 }
 </script>
 <script> function openBlog(blog){
