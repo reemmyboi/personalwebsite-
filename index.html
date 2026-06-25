@@ -190,6 +190,8 @@ h1{
     opacity:0;
     transform:translateY(20px);
     animation:fadeUp .5s forwards;
+    max-width:650px;
+    margin:0 auto 25px auto;
 }
 
 .blog-preview:nth-child(2){ animation-delay:.1s }
@@ -200,6 +202,9 @@ h1{
         opacity:1;
         transform:translateY(0);
     }
+}
+    .blog-preview h2{
+    margin-top:10px;
 }
 
 .blog-preview::after{
@@ -219,15 +224,30 @@ h1{
     transform:translateY(-8px) scale(1.015);
     box-shadow:0 20px 40px rgba(0,0,0,.7);
 }
+    .blog-post-card{
+    max-width:700px;
+    margin:auto;
+}
 
 #blogContent h1{
     margin-bottom:10px;
+    font-size:2rem;
 }
 
 #blogContent p{
-    line-height:1.8;
     margin:10px 0;
+    font-size:1.05rem;
+    line-height:1.8;
     color:#cbd5f5;
+}
+    .back-btn{
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    background:#1e293b;
+    color:white;
+    margin-bottom:20px;
 }
 
 
@@ -248,6 +268,7 @@ h1{
 .summary{
     color:#94a3b8;
     margin:8px 0;
+    font-size:.95rem;
 }
 
 .tags{
@@ -492,24 +513,27 @@ box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
        <button onclick="goBack()" style="margin-bottom:20px;">
 ⬅ Back
 </button>
-    </section> 
-      <script>  function goBack(){
-    const page = document.getElementById('blogPost');
+         <div id="blogContent"></div>
 
-    page.style.opacity = 0;
-    page.style.transform = "translateY(20px)";
+    </div>
+    </section>
+ 
+      <script> 
+          function goBack(){
+    const blogPost = document.getElementById('blogPost');
+    const blogs = document.getElementById('blogs');
+
+    blogPost.style.opacity = 0;
 
     setTimeout(()=>{
         showPage('blogs');
-        document.getElementById('blogs').style.opacity = 1;
+
+        // clean reset so nothing sticks
+        blogPost.style.opacity = 1;
+        blogPost.style.transform = "translateY(0)";
     },200);
-}
-  
+}  
       </script>
-
-        <div id="blogContent"></div>
-
-    </div>
 
 <script>
 function showPage(pageId){
