@@ -175,6 +175,49 @@ h1{
     color:#94a3b8;
     line-height:1.7;
 }
+   /* BLOG FIXED STYLES */
+.blog-preview{
+    background:#020617;
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:20px;
+    cursor:pointer;
+    transition:.3s;
+    overflow:hidden;
+}
+
+.blog-preview:hover{
+    transform:translateY(-5px);
+    background:#1e293b;
+}
+
+.blog-img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.blog-img-full{
+    width:100%;
+    border-radius:12px;
+    margin:15px 0;
+}
+
+.summary{
+    color:#94a3b8;
+    margin:8px 0;
+}
+
+.tags{
+    color:#60a5fa;
+    font-size:.85rem;
+}
+
+.full-content{
+    display:none;
+}
 
 /* Footer */
 footer{
@@ -339,21 +382,16 @@ footer{
         <p class="subtitle">
             Thoughts, updates, and random stuff ✨
         </p>
-<input 
-    type="text" 
-    id="searchBar" 
-    placeholder="Search blogs..." 
-    onkeyup="searchBlogs()"
-    style="
-        width:100%;
-        padding:12px;
-        margin-bottom:15px;
-        border-radius:10px;
-        border:none;
-        background:#020617;
-        color:white;
-    "
->
+
+        <!-- SEARCH -->
+        <input 
+            type="text" 
+            id="searchBar" 
+            placeholder="Search blogs..." 
+            onkeyup="searchBlogs()"
+            style="width:100%;padding:12px;margin-bottom:15px;border-radius:10px;border:none;background:#020617;color:white;"
+        >
+
         <!-- CONTROLS -->
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;">
             <button onclick="sortBlogs('new')">Newest</button>
@@ -368,77 +406,36 @@ footer{
         <div id="blogList">
 
             <!-- BLOG 1 -->
-            <div class="blog-preview" data-date="2026-06-20" data-tags="health">
+            <div class="blog-preview" data-date="2026-06-20" data-tags="health" onclick="openBlog(this)">
+                <img src="https://picsum.photos/800/400?1" class="blog-img">
                 <h2>Getting Back Into Shape</h2>
                 <p class="summary">Starting small with daily workouts and consistency.</p>
                 <p class="tags">#health</p>
+
                 <div class="full-content">
-                    <p>
-                        Recently I've been trying to rebuild my routine. Even just 15–20 minutes
-                        a day has been helping a lot. Consistency > intensity.
-                    </p>
-                </div>
-            </div>
-<div class="blog-preview" data-date="2026-06-25" data-tags="health">
-    <h2>My New Blog676767</h2>
-    <p class="summary">Short preview goes here67667.</p>
-    <p class="tags">#health</p>
-    <div class="full-content">
-        <p>Full blog content goes here..676767.</p>
-    </div>
-</div>
-            <!-- BLOG 2 -->
-            <div class="blog-preview" data-date="2026-06-15" data-tags="television">
-                <h2>Show I’ve Been Watching</h2>
-                <p class="summary">A quick take on a series I got hooked on.</p>
-                <p class="tags">#television</p>
-                <div class="full-content">
-                    <p>
-                        Been watching a new series lately and honestly it's way better than expected.
-                        The pacing and characters are solid.
-                    </p>
+                    <h1>Getting Back Into Shape</h1>
+                    <img src="https://picsum.photos/800/400?1" class="blog-img-full">
+                    <p>Recently I've been trying to rebuild my routine. Consistency matters more than intensity.</p>
                 </div>
             </div>
 
-            <!-- BLOG 3 -->
-            <div class="blog-preview" data-date="2026-06-10" data-tags="health television">
-                <h2>Balancing Screen Time</h2>
-                <p class="summary">Trying to balance entertainment and productivity.</p>
-                <p class="tags">#health #television</p>
+            <!-- BLOG 2 -->
+            <div class="blog-preview" data-date="2026-06-15" data-tags="television" onclick="openBlog(this)">
+                <img src="https://picsum.photos/800/400?2" class="blog-img">
+                <h2>Show I’ve Been Watching</h2>
+                <p class="summary">A quick take on a series I got hooked on.</p>
+                <p class="tags">#television</p>
+
                 <div class="full-content">
-                    <p>
-                        Watching shows is fun, but I’ve been working on limiting binge sessions
-                        and staying productive during the day.
-                    </p>
+                    <h1>Show I’ve Been Watching</h1>
+                    <img src="https://picsum.photos/800/400?2" class="blog-img-full">
+                    <p>This show surprised me a lot — great pacing and characters.</p>
                 </div>
             </div>
 
         </div>
     </div>
-<div class="blog-preview" 
-     data-date="2026-06-20" 
-     data-tags="health"
-     onclick="openBlog(this)">
-
-    <img src="https://picsum.photos/800/400?random=1" class="blog-img">
-
-    <h2>Getting Back Into Shape</h2>
-
-    <p class="summary">
-        Starting small with daily workouts and consistency.
-    </p>
-
-    <p class="tags">#health</p>
-
-    <!-- FULL BLOG DATA -->
-    <div class="full-content">
-        <h1>Getting Back Into Shape</h1>
-        <img src="https://picsum.photos/800/400?random=1" class="blog-img-full">
-        <p>
-            Recently I've been trying to rebuild my routine...
-        </p>
-    </div>
-</div>
+</section>
     <section id="blogPost" class="page">
     <div class="card">
 
@@ -449,47 +446,7 @@ footer{
         <div id="blogContent"></div>
 
     </div>
-</section>
-    .blog-preview{
-    background:#020617;
-    border-radius:12px;
-    padding:15px;
-    margin-bottom:15px;
-    cursor:pointer;
-    transition:.3s;
-    opacity:0;
-    transform:translateY(20px);
-    animation:fadeIn .5s forwards;
-}
 
-.blog-preview:hover{
-    transform:translateY(-5px) scale(1.01);
-    background:#1e293b;
-}
-
-@keyframes fadeIn{
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-}
-
-.blog-img{
-    width:100%;
-    border-radius:10px;
-    margin-bottom:10px;
-}
-
-.blog-img-full{
-    width:100%;
-    border-radius:10px;
-    margin:15px 0;
-}
-
-/* Smooth expand (if used later) */
-.full-content{
-    display:none;
-}
 <script>
 function showPage(pageId){
 
