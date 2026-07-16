@@ -1,0 +1,5 @@
+.agents/
+.claude/
+.claude-flow/
+.mcp.json
+skills-lock.json

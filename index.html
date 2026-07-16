@@ -224,6 +224,11 @@ h1{
     transform:translateY(-8px) scale(1.015);
     box-shadow:0 20px 40px rgba(0,0,0,.7);
 }
+
+.blog-preview:focus-visible{
+    outline:2px solid #60a5fa;
+    outline-offset:3px;
+}
     .blog-post-card{
     max-width:700px;
     margin:auto;
@@ -326,11 +331,12 @@ footer{
         <div class="tree-container">
 
             <!-- TREE IMAGE -->
-            <img src="image.png" class="tree-img">
+            <img src="image.png" class="tree-img" alt="Tree illustration linking to Reem's social media profiles">
 
            <!-- TOP SPLIT (main canopy fork) -->
 <a href="https://www.instagram.com/reemmydevs/"
    target="_blank"
+   rel="noopener noreferrer"
    class="link-node"
    style="top:110px; left:34%; transform:translate(-50%, -50%);">
    📸 Instagram
@@ -346,6 +352,7 @@ footer{
 <!-- UPPER BRANCH INTERSECTIONS -->
 <a href="https://www.youtube.com/channel/UCuhYpmyhSwhuAVxGsIc_nqg"
    target="_blank"
+   rel="noopener noreferrer"
    class="link-node"
    style="top:210px; left:22%; transform:translate(-50%, -50%);">
    ▶️ YouTube
@@ -353,6 +360,7 @@ footer{
 
 <a href="https://x.com/reemmyboi"
    target="_blank"
+   rel="noopener noreferrer"
    class="link-node"
    style="top:210px; left:78%; transform:translate(-50%, -50%);">
    🐦 X
@@ -362,6 +370,7 @@ footer{
 <!-- MID BRANCH SPLITS -->
 <a href="https://discord.gg/GuwnDvrFDR"
    target="_blank"
+   rel="noopener noreferrer"
    class="link-node"
    style="top:330px; left:18%; transform:translate(-50%, -50%);">
    👾 Discord
@@ -369,6 +378,7 @@ footer{
 
 <a href="https://www.twitch.tv/reemmy_"
    target="_blank"
+   rel="noopener noreferrer"
    class="link-node"
    style="top:330px; left:82%; transform:translate(-50%, -50%);">
    🎮 Twitch
@@ -417,6 +427,7 @@ footer{
 
             <a href="https://throne.com/reemmy"
                target="_blank"
+               rel="noopener noreferrer"
                class="wishlist-btn wishlist">
                wishlist
             </a>
@@ -466,15 +477,15 @@ box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
         <div id="blogList">
 
             <!-- BLOG 1 -->
-            <div class="blog-preview" data-date="2026-06-20" data-tags="health" onclick="openBlog(this)">
-                <img src="https://picsum.photos/800/400?1" class="blog-img">
+            <div class="blog-preview" data-date="2026-06-20" data-tags="health" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+                <img src="https://picsum.photos/800/400?1" class="blog-img" alt="Nootropics mushroom powder blog cover">
                 <h2>Nootropics Mushroom Powder</h2>
                 <p class="summary">This goes over the mushroom supplement I use and its effects</p>
                 <p class="tags">#health</p>
 
                 <div class="full-content">
                     <h1>Nootropics Mushroom Magic</h1>
-                    <img src="https://picsum.photos/800/400?1" class="blog-img-full">
+                    <img src="https://picsum.photos/800/400?1" class="blog-img-full" alt="Nootropics mushroom powder">
                     <p>Staying healthy isn't always about eating right but supplementing what we might not be eating. As a American mushroom varieties are definetly not part of my daily intake of food 
                     so I decided to supplement it. When you first start to look for mushroom products you get bombarded with terrible advertizments such as the Ryze Mushroom Coffee AI slop, I could of just stopped there
                     and said "yup here the product I wanna buy" but I am no supporter of AI and a decent rule of thumb I go by is, the better the company is the less they advetize and let word of mouth do its thing. 
@@ -489,15 +500,15 @@ box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
             </div>
 
             <!-- BLOG 2 -->
-            <div class="blog-preview" data-date="2026-06-15" data-tags="television" onclick="openBlog(this)">
-                <img src="https://picsum.photos/800/400?2" class="blog-img">
+            <div class="blog-preview" data-date="2026-06-15" data-tags="television" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+                <img src="https://picsum.photos/800/400?2" class="blog-img" alt="Show I've been watching blog cover">
                 <h2>Show I’ve Been Watching</h2>
                 <p class="summary">A quick take on a series I got hooked on.</p>
                 <p class="tags">#television</p>
 
                 <div class="full-content">
                     <h1>Show I’ve Been Watching</h1>
-                    <img src="https://picsum.photos/800/400?2" class="blog-img-full">
+                    <img src="https://picsum.photos/800/400?2" class="blog-img-full" alt="Show I've been watching">
                     <p>This show surprised me a lot — great pacing and characters.</p>
                 </div>
             </div>
@@ -518,13 +529,7 @@ box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
  
       <script> 
 function goBack(){
-
-    const blogs = document.getElementById('blogs');
-
-    // restore visibility
-    blogs.style.opacity = 1;
-
-    // switch page
+    // showPage() already resets opacity/transform for every .page
     showPage('blogs');
 }
       </script>
@@ -575,13 +580,27 @@ blogsPage.style.opacity = 0;
 
     },200);
 }
-// SEARCH
+// SEARCH + FILTER (combined so neither one clobbers the other's state)
+let activeCategory = 'all';
+
 function searchBlogs(){
+    applyBlogVisibility();
+}
+
+function filterBlogs(category){
+    activeCategory = category;
+    applyBlogVisibility();
+}
+
+function applyBlogVisibility(){
     const input = document.getElementById('searchBar').value.toLowerCase();
 
     document.querySelectorAll('.blog-preview').forEach(blog=>{
         const text = blog.innerText.toLowerCase();
-        blog.style.display = text.includes(input) ? 'block' : 'none';
+        const matchesSearch = text.includes(input);
+        const tags = blog.dataset.tags.split(' ');
+        const matchesCategory = activeCategory === 'all' || tags.includes(activeCategory);
+        blog.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
     });
 }
 
@@ -597,17 +616,6 @@ function sortBlogs(type){
     });
 
     blogs.forEach(blog => container.appendChild(blog));
-}
-
-// FILTER
-function filterBlogs(category){
-    document.querySelectorAll('.blog-preview').forEach(blog=>{
-        if(category === 'all'){
-            blog.style.display = 'block';
-        } else {
-            blog.style.display = blog.dataset.tags.includes(category) ? 'block' : 'none';
-        }
-    });
 } </script>
 </body>
 </html>
