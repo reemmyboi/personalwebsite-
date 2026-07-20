@@ -100,19 +100,18 @@ h1{
 .tree-container{
     position:relative;
     width:100%;
-    height:700px;
-    margin-top:20px;
+    max-width:600px;
+    aspect-ratio:1/1;
+    margin:20px auto 0;
 }
 
 /* Tree image */
 .tree-img{
     position:absolute;
-    top:0;                 /* anchor trunk */
-    left:50%;
-    transform:translateX(-50%);
+    top:0;
+    left:0;
     width:100%;
-    max-width:600px;
-    height:auto;
+    height:100%;
     object-fit:contain;
     opacity:.9;
     pointer-events:none;
@@ -135,36 +134,6 @@ h1{
 .link-node:hover{
     transform:scale(1.08);
     background:#334155;
-}
-
-/* Wishlist */
-.wishlist-buttons{
-    display:flex;
-    justify-content:center;
-    gap:20px;
-    flex-wrap:wrap;
-    margin-top:30px;
-}
-
-.wishlist-btn{
-    text-decoration:none;
-    padding:16px 30px;
-    border-radius:14px;
-    font-weight:bold;
-    color:white;
-    transition:.25s;
-}
-
-.wishlist{
-    background:#f59e0b;
-}
-
-.paypal{
-    background:#2563eb;
-}
-
-.wishlist-btn:hover{
-    transform:translateY(-3px);
 }
 
 /* Blog */
@@ -292,15 +261,36 @@ footer{
     color:#64748b;
 }
 
-/* Mobile */
+/* Mobile: tree fruit can't fit as floating branch labels once the
+   image gets small, so it flattens into a stacked link list under a
+   purely decorative tree image */
 @media(max-width:768px){
 
 .tree-container{
-    height:800px;
+    max-width:280px;
+    aspect-ratio:auto;
+    height:auto;
+    margin:20px auto 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+}
+
+.tree-img{
+    position:static;
+    width:65%;
+    height:auto;
+    margin-bottom:6px;
 }
 
 .link-node{
-    font-size:.8rem;
+    position:static !important;
+    transform:none !important;
+    width:80%;
+    text-align:center;
+    font-size:.85rem;
+    padding:10px 14px;
 }
 }
 </style>
@@ -311,7 +301,6 @@ footer{
 <nav>
     <button onclick="showPage('media')">🌳 Media Tree</button>
     <button onclick="showPage('about')">📝 About Me</button>
-    <button onclick="showPage('wishlist')">🎁 Wishlist</button>
     <button onclick="showPage('blogs')">📰 Blogs</button>
 </nav>
 
@@ -338,13 +327,13 @@ footer{
    target="_blank"
    rel="noopener noreferrer"
    class="link-node"
-   style="top:110px; left:34%; transform:translate(-50%, -50%);">
+   style="top:18.3%; left:29.4%; transform:translate(-50%, -50%);">
    📸 Instagram
 </a>
 
 <a href="#"
    class="link-node"
-   style="top:110px; left:66%; transform:translate(-50%, -50%);">
+   style="top:18.3%; left:70.6%; transform:translate(-50%, -50%);">
    🎵 TikTok
 </a>
 
@@ -354,7 +343,7 @@ footer{
    target="_blank"
    rel="noopener noreferrer"
    class="link-node"
-   style="top:210px; left:22%; transform:translate(-50%, -50%);">
+   style="top:35%; left:14%; transform:translate(-50%, -50%);">
    ▶️ YouTube
 </a>
 
@@ -362,7 +351,7 @@ footer{
    target="_blank"
    rel="noopener noreferrer"
    class="link-node"
-   style="top:210px; left:78%; transform:translate(-50%, -50%);">
+   style="top:35%; left:86%; transform:translate(-50%, -50%);">
    🐦 X
 </a>
 
@@ -372,7 +361,7 @@ footer{
    target="_blank"
    rel="noopener noreferrer"
    class="link-node"
-   style="top:330px; left:18%; transform:translate(-50%, -50%);">
+   style="top:55%; left:8.8%; transform:translate(-50%, -50%);">
    👾 Discord
 </a>
 
@@ -380,8 +369,18 @@ footer{
    target="_blank"
    rel="noopener noreferrer"
    class="link-node"
-   style="top:330px; left:82%; transform:translate(-50%, -50%);">
+   style="top:55%; left:91.2%; transform:translate(-50%, -50%);">
    🎮 Twitch
+</a>
+
+
+<!-- LOWER BRANCH TIP (fruit) -->
+<a href="https://throne.com/reemmy"
+   target="_blank"
+   rel="noopener noreferrer"
+   class="link-node"
+   style="top:75%; left:21.7%; transform:translate(-50%, -50%);">
+   🎁 Wishlist
 </a>
 
         </div>
@@ -407,34 +406,12 @@ footer{
             <br>
 
             <p>
-                My socials may be a little barren but check them out and support me!! Also
-                take a peek at the wishlists section to kickstart me in life. Appreciate you reading -Reem
+                My socials may be a little barren but check them out and support me!! Appreciate you reading -Reem
             </p>
         </div>
     </div>
 </section>
 
-<!-- WISHLIST -->
-<section id="wishlist" class="page">
-    <div class="card">
-        <h1>Wishlist (WIP)</h1>
-
-        <p class="subtitle">
-            Support me through my wishlist!
-        </p>
-
-        <div class="wishlist-buttons">
-
-            <a href="https://throne.com/reemmy"
-               target="_blank"
-               rel="noopener noreferrer"
-               class="wishlist-btn wishlist">
-               wishlist
-            </a>
-
-        </div>
-    </div>
-</section>
 <!-- BLOGS -->
 <section id="blogs" class="page">
     <div class="card">
