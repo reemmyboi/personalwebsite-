@@ -116,6 +116,7 @@ h1{
     box-shadow:0 5px 15px rgba(0,0,0,.6);
     transition:.25s;
     border:1px solid rgba(255,255,255,.08);
+    white-space:nowrap;
 }
 
 .link-node:hover{
@@ -126,11 +127,11 @@ h1{
 /* Tree fruit positions (percentages of the square tree-container) */
 .node-instagram{ top:18.3%; left:29.4%; transform:translate(-50%, -50%); }
 .node-tiktok{ top:18.3%; left:70.6%; transform:translate(-50%, -50%); }
-.node-youtube{ top:35%; left:14%; transform:translate(-50%, -50%); }
+.node-youtube{ top:31%; left:14%; transform:translate(-50%, -50%); }
 .node-x{ top:35%; left:86%; transform:translate(-50%, -50%); }
-.node-discord{ top:55%; left:8.8%; transform:translate(-50%, -50%); }
+.node-discord{ top:55%; left:11%; transform:translate(-50%, -50%); }
 .node-twitch{ top:55%; left:91.2%; transform:translate(-50%, -50%); }
-.node-wishlist{ top:75%; left:21.7%; transform:translate(-50%, -50%); }
+.node-wishlist{ top:63%; left:22%; transform:translate(-50%, -50%); }
 
 /* Blog */
 .blog-box{
@@ -306,5 +307,6 @@ footer{
     text-align:center;
     font-size:.85rem;
     padding:10px 14px;
+    white-space:normal;
 }
 }
