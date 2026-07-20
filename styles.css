@@ -1,0 +1,310 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:linear-gradient(135deg,#0f172a,#020617,#020617);
+    color:#e5e7eb;
+}
+
+/* Navigation */
+nav{
+    display:flex;
+    justify-content:center;
+    gap:1rem;
+    padding:20px;
+    flex-wrap:wrap;
+}
+
+nav button{
+    border:none;
+    padding:12px 22px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+    background:rgba(30,41,59,.6);
+    color:#e5e7eb;
+    backdrop-filter:blur(10px);
+    box-shadow:0 5px 15px rgba(0,0,0,.5);
+    transition:.25s;
+}
+
+nav button:hover{
+    transform:translateY(-2px);
+    background:#1e293b;
+}
+
+/* Pages */
+.page{
+    display:none;
+    width:90%;
+    max-width:900px;
+    margin:auto;
+    padding:2rem;
+    transition:all .3s ease;
+}
+
+.page.active{
+    display:block;
+}
+
+/* Cards */
+.card{
+    background:rgba(15,23,42,.6);
+    backdrop-filter:blur(14px);
+    border-radius:20px;
+    padding:2rem;
+    box-shadow:0 10px 25px rgba(0,0,0,.6);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:1rem;
+}
+
+.subtitle{
+    text-align:center;
+    margin-bottom:2rem;
+    color:#94a3b8;
+}
+
+/* Profile */
+.profile-pic{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    object-fit:cover;
+    display:block;
+    margin:0 auto 1rem;
+    border:3px solid #334155;
+}
+
+/* Tree */
+.tree-container{
+    position:relative;
+    width:100%;
+    max-width:600px;
+    aspect-ratio:1/1;
+    margin:20px auto 0;
+}
+
+/* Tree image */
+.tree-img{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    opacity:.9;
+    pointer-events:none;
+}
+
+/* Link nodes styled like fruit */
+.link-node{
+    position:absolute;
+    text-decoration:none;
+    color:white;
+    background:#1e293b;
+    padding:10px 16px;
+    border-radius:20px;
+    font-weight:600;
+    box-shadow:0 5px 15px rgba(0,0,0,.6);
+    transition:.25s;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.link-node:hover{
+    transform:scale(1.08);
+    background:#334155;
+}
+
+/* Tree fruit positions (percentages of the square tree-container) */
+.node-instagram{ top:18.3%; left:29.4%; transform:translate(-50%, -50%); }
+.node-tiktok{ top:18.3%; left:70.6%; transform:translate(-50%, -50%); }
+.node-youtube{ top:35%; left:14%; transform:translate(-50%, -50%); }
+.node-x{ top:35%; left:86%; transform:translate(-50%, -50%); }
+.node-discord{ top:55%; left:8.8%; transform:translate(-50%, -50%); }
+.node-twitch{ top:55%; left:91.2%; transform:translate(-50%, -50%); }
+.node-wishlist{ top:75%; left:21.7%; transform:translate(-50%, -50%); }
+
+/* Blog */
+.blog-box{
+    min-height:350px;
+    background:#020617;
+    border-radius:15px;
+    padding:25px;
+    color:#94a3b8;
+    line-height:1.7;
+}
+   /* BLOG FIXED STYLES */
+.blog-preview{
+    background:linear-gradient(145deg,#020617,#020617,#0f172a);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:20px;
+    cursor:pointer;
+    transition:all .35s ease;
+    overflow:hidden;
+    position:relative;
+    border:1px solid rgba(255,255,255,.05);
+    opacity:0;
+    transform:translateY(20px);
+    animation:fadeUp .5s forwards;
+    max-width:650px;
+    margin:0 auto 25px auto;
+}
+
+.blog-preview:nth-child(2){ animation-delay:.1s }
+.blog-preview:nth-child(3){ animation-delay:.2s }
+
+@keyframes fadeUp{
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+    .blog-preview h2{
+    margin-top:10px;
+}
+
+.blog-preview::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg,transparent,rgba(96,165,250,.15),transparent);
+    opacity:0;
+    transition:.4s;
+}
+
+.blog-preview:hover::after{
+    opacity:1;
+}
+
+.blog-preview:hover{
+    transform:translateY(-8px) scale(1.015);
+    box-shadow:0 20px 40px rgba(0,0,0,.7);
+}
+
+.blog-preview:focus-visible{
+    outline:2px solid #60a5fa;
+    outline-offset:3px;
+}
+    .blog-post-card{
+    max-width:700px;
+    margin:auto;
+}
+
+#blogContent h1{
+    margin-bottom:10px;
+    font-size:2rem;
+}
+
+#blogContent p{
+    margin:10px 0;
+    font-size:1.05rem;
+    line-height:1.8;
+    color:#cbd5f5;
+}
+    .back-btn{
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    background:#1e293b;
+    color:white;
+    margin-bottom:20px;
+}
+
+.search-bar{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border-radius:12px;
+    border:none;
+    background:#020617;
+    color:white;
+    outline:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+
+.blog-controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-bottom:20px;
+}
+
+.blog-img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.blog-img-full{
+    width:100%;
+    border-radius:12px;
+    margin:15px 0;
+}
+
+.summary{
+    color:#94a3b8;
+    margin:8px 0;
+    font-size:.95rem;
+}
+
+.tags{
+    color:#60a5fa;
+    font-size:.85rem;
+}
+
+.full-content{
+    display:none;
+}
+
+/* Footer */
+footer{
+    text-align:center;
+    padding:30px;
+    color:#64748b;
+}
+
+/* Mobile: tree fruit can't fit as floating branch labels once the
+   image gets small, so it flattens into a stacked link list under a
+   purely decorative tree image */
+@media(max-width:768px){
+
+.tree-container{
+    max-width:280px;
+    aspect-ratio:auto;
+    height:auto;
+    margin:20px auto 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+}
+
+.tree-img{
+    position:static;
+    width:65%;
+    height:auto;
+    margin-bottom:6px;
+}
+
+.link-node{
+    position:static !important;
+    transform:none !important;
+    width:80%;
+    text-align:center;
+    font-size:.85rem;
+    padding:10px 14px;
+}
+}
