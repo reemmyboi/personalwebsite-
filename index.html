@@ -102,21 +102,124 @@
     <div class="card">
         <h1>About Me</h1>
 
-        <div class="blog-box">
+        <div class="about-content">
             <h2>Hey I'm Reemmy!</h2>
-            <br>
 
             <p>
-                Yo I'm Reemmy, you can find me online using the same name everywhere and I am a big time gamer, 
-                I play MC, Fnaf, Roblox, OW, Terraria, Etc. Im commited to the military as of now starting my 
-                term in September of 2026. I enjoy gardening and read occasionally. I also build PCs and 
-                enjoying urbexing.
+                Gamer, PC builder, and drone photographer. I'm committed to the military starting September 2026.
+                Outside of that I'm usually gardening, reading, or out urbexing.
             </p>
 
-            <br>
+            <p>
+                One of the things I enjoy most is <strong>building custom PCs</strong> from scratch. Here's a look
+                at some of the builds I've put together:
+            </p>
+
+            <!-- Placeholder slides: swap each one's inner content for
+                 <img src="photos/pc-build-1.jpg" class="carousel-img" alt="Description of the build"> -->
+            <div class="carousel" role="region" aria-label="PC build photos" data-interval="4000">
+                <div class="carousel-track">
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🖥️</span>
+                        <span class="gallery-placeholder-text">Build photo 1 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🖥️</span>
+                        <span class="gallery-placeholder-text">Build photo 2 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🖥️</span>
+                        <span class="gallery-placeholder-text">Build photo 3 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🖥️</span>
+                        <span class="gallery-placeholder-text">Build photo 4 coming soon</span>
+                    </div>
+                </div>
+                <button type="button" class="carousel-arrow carousel-prev" onclick="carouselNav(this.closest('.carousel'), -1)" aria-label="Previous PC build photo">‹</button>
+                <button type="button" class="carousel-arrow carousel-next" onclick="carouselNav(this.closest('.carousel'), 1)" aria-label="Next PC build photo">›</button>
+            </div>
 
             <p>
-                My socials may be a little barren but check them out and support me!! Appreciate you reading -Reem
+                I'm also big into <strong>drone photography</strong>, getting out and capturing aerial shots of
+                nature and interesting scenery. Here's some of what I've captured so far:
+            </p>
+
+            <div class="carousel" role="region" aria-label="Drone photography photos" data-interval="4000">
+                <div class="carousel-track">
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20241230_142936_72_1735587002660_photo.jpg" class="carousel-img" alt="Aerial view of the coastline leading toward a distant lighthouse community">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20241230_143250_86_1735601133256_photo.jpg" class="carousel-img" alt="Bird's nest built in a bleached driftwood tree on the beach">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_150450_202_1767643515061_photo.jpg" class="carousel-img" alt="Aerial view of a sandy tidal creek winding through the beach at low tide">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_150544_204_1767643552856_photo.jpg" class="carousel-img" alt="Aerial view of a sandy spit curving into the open water">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_152956_219_1767645016237_photo.jpg" class="carousel-img" alt="Aerial view of the beach and treeline along the coast">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_160812_251_1767647310566_photo.jpg" class="carousel-img" alt="Aerial view of a driftwood-covered beach">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_161012_257_1767647479313_photo.jpg" class="carousel-img" alt="Close aerial shot of a bird's nest in a driftwood tree">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_161102_258_1767647470545_photo.jpg" class="carousel-img" alt="Aerial view of a lighthouse overlooking the beach">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_161306_265_1767648336329_photo.jpg" class="carousel-img" alt="Aerial view of driftwood and tidal pools along the beach">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_162608_276_1767648386593_photo.jpg" class="carousel-img" alt="Aerial view of a tidal creek flowing into the beach">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_162730_283_1767648885341_photo.jpg" class="carousel-img" alt="Aerial view of a pier over the water next to a sandbar">
+                    </div>
+                    <div class="carousel-slide">
+                        <img src="photos/dji_fly_20260105_162804_287_1767649226335_photo.jpg" class="carousel-img" alt="Aerial view of a marsh and sand spit meeting the ocean">
+                    </div>
+                </div>
+                <button type="button" class="carousel-arrow carousel-prev" onclick="carouselNav(this.closest('.carousel'), -1)" aria-label="Previous drone photo">‹</button>
+                <button type="button" class="carousel-arrow carousel-next" onclick="carouselNav(this.closest('.carousel'), 1)" aria-label="Next drone photo">›</button>
+            </div>
+
+            <p>
+                On the quieter side, I spend a lot of time <strong>gardening</strong>. Here's a few shots of what
+                I've grown:
+            </p>
+
+            <!-- Placeholder slides: swap each one's inner content for
+                 <img src="photos/garden-1.jpg" class="carousel-img" alt="Description of the shot"> -->
+            <div class="carousel" role="region" aria-label="Gardening photos" data-interval="4000">
+                <div class="carousel-track">
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🌱</span>
+                        <span class="gallery-placeholder-text">Garden photo 1 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🌱</span>
+                        <span class="gallery-placeholder-text">Garden photo 2 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🌱</span>
+                        <span class="gallery-placeholder-text">Garden photo 3 coming soon</span>
+                    </div>
+                    <div class="carousel-slide">
+                        <span class="gallery-placeholder-icon">🌱</span>
+                        <span class="gallery-placeholder-text">Garden photo 4 coming soon</span>
+                    </div>
+                </div>
+                <button type="button" class="carousel-arrow carousel-prev" onclick="carouselNav(this.closest('.carousel'), -1)" aria-label="Previous garden photo">‹</button>
+                <button type="button" class="carousel-arrow carousel-next" onclick="carouselNav(this.closest('.carousel'), 1)" aria-label="Next garden photo">›</button>
+            </div>
+
+            <p>
+                Appreciate you taking the time to check this out -Reem
             </p>
         </div>
     </div>
@@ -204,7 +307,7 @@ onkeyup="searchBlogs()"
     </div>
     </section>
  
-      <script> 
+      <script>
 function goBack(){
     // showPage() already resets opacity/transform for every .page
     showPage('blogs');
@@ -212,7 +315,44 @@ function goBack(){
       </script>
 
 <script>
-function showPage(pageId){ 
+// SKILL PHOTO CAROUSELS
+function carouselGoTo(carousel, index){
+    const track = carousel.querySelector('.carousel-track');
+    const slideCount = carousel.querySelectorAll('.carousel-slide').length;
+    const newIndex = ((index % slideCount) + slideCount) % slideCount;
+
+    track.style.transform = `translateX(-${newIndex * 100}%)`;
+    carousel.dataset.index = newIndex;
+}
+
+function carouselStartAuto(carousel){
+    clearInterval(carousel._autoTimer);
+    const interval = parseInt(carousel.dataset.interval, 10) || 4000;
+
+    carousel._autoTimer = setInterval(() => {
+        const current = parseInt(carousel.dataset.index, 10) || 0;
+        carouselGoTo(carousel, current + 1);
+    }, interval);
+}
+
+function carouselNav(carousel, direction){
+    const current = parseInt(carousel.dataset.index, 10) || 0;
+    carouselGoTo(carousel, current + direction);
+
+    // pause auto-advance, resume after 10s of no interaction
+    clearInterval(carousel._autoTimer);
+    clearTimeout(carousel._resumeTimer);
+    carousel._resumeTimer = setTimeout(() => carouselStartAuto(carousel), 10000);
+}
+
+document.querySelectorAll('.carousel').forEach(carousel => {
+    carousel.dataset.index = 0;
+    carouselStartAuto(carousel);
+});
+</script>
+
+<script>
+function showPage(pageId){
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
 
