@@ -122,7 +122,7 @@ h1{
 }
 
 .link-node:hover{
-    transform:scale(1.08);
+    transform:translate(-50%, -50%) scale(1.08);
     background:#334155;
 }
 
@@ -134,6 +134,19 @@ h1{
 .node-discord{ top:55%; left:11%; transform:translate(-50%, -50%); }
 .node-twitch{ top:55%; left:91.2%; transform:translate(-50%, -50%); }
 .node-wishlist{ top:63%; left:22%; transform:translate(-50%, -50%); }
+
+/* TikTok easter egg */
+.tiktok-message{
+    display:none;
+    text-align:center;
+    margin:1.5rem auto 0;
+    padding:10px 18px;
+    border-radius:10px;
+    background:rgba(245,158,11,.15);
+    color:#f59e0b;
+    font-weight:600;
+    max-width:fit-content;
+}
 
 /* About page narrative */
 .about-content h2{

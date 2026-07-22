@@ -48,6 +48,7 @@
 </a>
 
 <a href="#"
+   id="tiktokBtn"
    class="link-node node-tiktok">
    🎵 TikTok
 </a>
@@ -94,6 +95,8 @@
 </a>
 
         </div>
+
+        <p id="tiktokMessage" class="tiktok-message">I do not have a TikTok</p>
     </div>
 </section>
 
@@ -349,6 +352,76 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     carousel.dataset.index = 0;
     carouselStartAuto(carousel);
 });
+</script>
+
+<script>
+// TIKTOK EASTER EGG
+(function(){
+    const btn = document.getElementById('tiktokBtn');
+    const message = document.getElementById('tiktokMessage');
+    if(!btn) return;
+
+    const maxCatches = 3;
+    let catches = 0;
+    let fleeTimer = null;
+
+    function randomizePosition(){
+        const container = btn.closest('.tree-container');
+        if(!container) return;
+        btn.style.top = (12 + Math.random() * 70) + '%';
+        btn.style.left = (10 + Math.random() * 80) + '%';
+        btn.style.transform = 'translate(-50%, -50%)';
+    }
+
+    // shrink relative to whatever size it's currently rendering at, so it
+    // shrinks noticeably whether starting from the desktop tree or the
+    // mobile stacked-list size
+    function shrinkOneStage(){
+        const style = getComputedStyle(btn);
+        const shrink = (value) => (parseFloat(value) * 0.78) + 'px';
+
+        btn.style.fontSize = shrink(style.fontSize);
+        btn.style.paddingTop = shrink(style.paddingTop);
+        btn.style.paddingBottom = shrink(style.paddingBottom);
+        btn.style.paddingLeft = shrink(style.paddingLeft);
+        btn.style.paddingRight = shrink(style.paddingRight);
+    }
+
+    // desktop hover: give a brief moment to click before it flees
+    btn.addEventListener('mouseenter', () => {
+        if(catches >= maxCatches) return;
+        clearTimeout(fleeTimer);
+        fleeTimer = setTimeout(randomizePosition, 180);
+    });
+
+    btn.addEventListener('mouseleave', () => {
+        clearTimeout(fleeTimer);
+    });
+
+    // if it does get caught: shrink and relocate, up to 3 times
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearTimeout(fleeTimer);
+        catches++;
+
+        if(catches >= maxCatches){
+            btn.style.transition = 'opacity .3s';
+            btn.style.opacity = '0';
+            setTimeout(() => { btn.style.display = 'none'; }, 300);
+            if(message) message.style.display = 'block';
+            return;
+        }
+
+        btn.style.transition = 'opacity .2s';
+        btn.style.opacity = '0';
+
+        setTimeout(() => {
+            randomizePosition();
+            shrinkOneStage();
+            btn.style.opacity = '1';
+        }, 200);
+    });
+})();
 </script>
 
 <script>
