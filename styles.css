@@ -182,6 +182,7 @@ h1{
 }
 
 .carousel-slide{
+    position:relative;
     flex:0 0 100%;
     width:100%;
     height:100%;
@@ -191,6 +192,18 @@ h1{
     justify-content:center;
     gap:8px;
     color:#64748b;
+}
+
+.carousel-caption{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    padding:24px 14px 10px;
+    background:linear-gradient(to top, rgba(0,0,0,.75), transparent);
+    color:#e5e7eb;
+    font-size:.85rem;
+    text-align:center;
 }
 
 .carousel-img{
