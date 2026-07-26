@@ -420,7 +420,23 @@ function carouselNav(carousel, direction){
     carousel._resumeTimer = setTimeout(() => carouselStartAuto(carousel), 10000);
 }
 
+// shuffle each carousel's slides (image + its caption move together
+// since they're both inside the same .carousel-slide) so the order
+// is different every time the page loads
+function shuffleSlides(carousel){
+    const track = carousel.querySelector('.carousel-track');
+    const slides = Array.from(track.children);
+
+    for(let i = slides.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [slides[i], slides[j]] = [slides[j], slides[i]];
+    }
+
+    slides.forEach(slide => track.appendChild(slide));
+}
+
 document.querySelectorAll('.carousel').forEach(carousel => {
+    shuffleSlides(carousel);
     carousel.dataset.index = 0;
     carouselStartAuto(carousel);
 });
