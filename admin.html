@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Blog Admin</title>
+
+<link rel="icon" type="image/png" sizes="32x32" href="photos/favicon-32x32.png">
+<link rel="stylesheet" href="styles.css">
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+</head>
+
+<body>
+
+<!-- TOKEN GATE -->
+<section id="gate" class="page active">
+    <div class="card admin-gate">
+        <h1>Blog Admin</h1>
+        <p class="subtitle">
+            Paste a GitHub fine-grained token scoped to this repo
+            (Contents: Read and write) to unlock the editor.
+        </p>
+
+        <input type="password" id="tokenInput" class="search-bar" placeholder="github_pat_...">
+        <button type="button" id="tokenSubmit" onclick="handleTokenSubmit()">Unlock</button>
+
+        <p id="gateError" class="admin-error"></p>
+        <p class="admin-hint">
+            Settings → Developer settings → Personal access tokens → Fine-grained tokens →
+            repository access limited to this repo only, permission "Contents: Read and write".
+            See README.md in the repo for the full setup steps.
+        </p>
+    </div>
+</section>
+
+<!-- EDITOR -->
+<section id="editorPage" class="page">
+    <div class="card">
+        <div class="admin-toolbar">
+            <h1 style="margin:0;">Blog Admin</h1>
+            <button type="button" class="back-btn" onclick="handleLogout()" style="margin:0;">Log out</button>
+        </div>
+
+        <!-- LIST VIEW -->
+        <div id="listView">
+            <div class="admin-toolbar">
+                <button type="button" onclick="showNewPostForm()">+ New Post</button>
+                <button type="button" onclick="refreshPostList()">Refresh</button>
+            </div>
+            <div id="postList"></div>
+            <p id="listStatus" class="admin-status"></p>
+        </div>
+
+        <!-- FORM VIEW -->
+        <div id="formView" style="display:none">
+            <button type="button" class="back-btn" onclick="showListView()">⬅ Back to list</button>
+
+            <div class="admin-form">
+                <label for="fieldTitle">Title</label>
+                <input type="text" id="fieldTitle" placeholder="Post title">
+
+                <label for="fieldSummary">Summary</label>
+                <textarea id="fieldSummary" placeholder="One or two sentences shown on the preview card"></textarea>
+
+                <label for="fieldTags">Tags</label>
+                <div class="admin-tag-input" id="tagInputWrap">
+                    <input type="text" id="fieldTagEntry" placeholder="Type a tag, press Enter" onkeydown="handleTagKeydown(event)">
+                </div>
+                <p class="admin-hint">Press Enter or comma after each tag. Multi-word tags are hyphenated automatically.</p>
+
+                <label for="fieldDate">Date</label>
+                <input type="date" id="fieldDate">
+
+                <label for="fieldImage">Cover image</label>
+                <input type="file" id="fieldImage" accept="image/*" onchange="handleImageChange(event)">
+                <img id="imagePreview" class="admin-img-preview" alt="Cover image preview">
+
+                <label for="quillEditor">Body</label>
+                <div id="quillEditor"></div>
+
+                <p id="formStatus" class="admin-status"></p>
+                <button type="button" id="publishBtn" onclick="handlePublish()">Publish</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="toast" class="admin-toast" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

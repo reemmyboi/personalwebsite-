@@ -320,15 +320,20 @@ onkeyup="searchBlogs()"
             <button onclick="sortBlogs('old')">Oldest</button>
 
             <button onclick="filterBlogs('all')">All</button>
-            <button onclick="filterBlogs('health')">Health</button>
-            <button onclick="filterBlogs('television')">Television</button>
+            <!-- generated at load by renderTagButtons(), one button per tag actually in use -->
+            <div id="tagButtons"></div>
         </div>
 
         <!-- BLOG LIST -->
+        <!-- New posts are inserted right after ADMIN:BLOG_LIST_START by admin.html.
+             Do not remove these two comments -- admin.html relies on them to find
+             where to splice post markup into this file. -->
         <div id="blogList">
+            <!-- ADMIN:BLOG_LIST_START -->
 
             <!-- BLOG 1 -->
-            <div class="blog-preview" data-date="2026-06-20" data-tags="health" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+            <div class="blog-preview" data-slug="nootropics-mushroom-powder" data-date="2026-06-20" data-tags="health" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+                <!-- TODO: replace with a photos/ image via admin.html -->
                 <img src="https://picsum.photos/800/400?1" class="blog-img" alt="Nootropics mushroom powder blog cover">
                 <h2>Nootropics Mushroom Powder</h2>
                 <p class="summary">This goes over the mushroom supplement I use and its effects</p>
@@ -337,9 +342,9 @@ onkeyup="searchBlogs()"
                 <div class="full-content">
                     <h1>Nootropics Mushroom Magic</h1>
                     <img src="https://picsum.photos/800/400?1" class="blog-img-full" alt="Nootropics mushroom powder">
-                    <p>Staying healthy isn't always about eating right but supplementing what we might not be eating. As a American mushroom varieties are definetly not part of my daily intake of food 
+                    <p>Staying healthy isn't always about eating right but supplementing what we might not be eating. As a American mushroom varieties are definetly not part of my daily intake of food
                     so I decided to supplement it. When you first start to look for mushroom products you get bombarded with terrible advertizments such as the Ryze Mushroom Coffee AI slop, I could of just stopped there
-                    and said "yup here the product I wanna buy" but I am no supporter of AI and a decent rule of thumb I go by is, the better the company is the less they advetize and let word of mouth do its thing. 
+                    and said "yup here the product I wanna buy" but I am no supporter of AI and a decent rule of thumb I go by is, the better the company is the less they advetize and let word of mouth do its thing.
                     So as the dedicated perfectionist I am I decided to look deeper than the first Instagram advertizement I saw. I looked across some review websites and one of their highest rated companies was one
                     called Nootropics Depo so I looked it up on Reddit to access normal and real peoples opinions and everything checked out! For example they have clear transparency about its products,
                     products are third party lab testing, good product sourcing, etc. So I gave it a try and thats where I found most of the supplements I buy now since the price is pretty good as well and you get way more bang
@@ -351,7 +356,8 @@ onkeyup="searchBlogs()"
             </div>
 
             <!-- BLOG 2 -->
-            <div class="blog-preview" data-date="2026-06-15" data-tags="television" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+            <div class="blog-preview" data-slug="show-ive-been-watching" data-date="2026-06-15" data-tags="television" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+                <!-- TODO: replace with a photos/ image via admin.html -->
                 <img src="https://picsum.photos/800/400?2" class="blog-img" alt="Show I've been watching blog cover">
                 <h2>Show I’ve Been Watching</h2>
                 <p class="summary">A quick take on a series I got hooked on.</p>
@@ -364,6 +370,7 @@ onkeyup="searchBlogs()"
                 </div>
             </div>
 
+            <!-- ADMIN:BLOG_LIST_END -->
         </div>
     </div>
 </section>
@@ -590,6 +597,28 @@ function sortBlogs(type){
     });
 
     blogs.forEach(blog => container.appendChild(blog));
-} </script>
+}
+
+// TAG BUTTONS (generated from whatever tags are actually in use, so
+// admin.html never has to touch this file's button markup when a new
+// tag shows up on a post)
+function renderTagButtons(){
+    const tags = new Set();
+    document.querySelectorAll('.blog-preview').forEach(blog=>{
+        (blog.dataset.tags || '').split(' ').filter(Boolean).forEach(t => tags.add(t));
+    });
+
+    const container = document.getElementById('tagButtons');
+    container.innerHTML = '';
+    Array.from(tags).sort().forEach(tag=>{
+        const btn = document.createElement('button');
+        btn.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
+        btn.onclick = () => filterBlogs(tag);
+        container.appendChild(btn);
+    });
+}
+
+renderTagButtons();
+</script>
 </body>
 </html>

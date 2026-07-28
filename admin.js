@@ -1,0 +1,615 @@
+// ===== CONFIG =====
+const REPO_OWNER = 'reemmyboi';
+const REPO_NAME = 'personalwebsite-';
+const API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
+const TOKEN_KEY = 'gh_pat';
+const ANCHOR_START = '<!-- ADMIN:BLOG_LIST_START -->';
+const ANCHOR_END = '<!-- ADMIN:BLOG_LIST_END -->';
+
+// ===== UTF-8-SAFE BASE64 =====
+// Plain btoa/atob operate on UTF-16 code units, not bytes, and break on
+// any character outside Latin1 -- this site uses emoji throughout.
+function utf8ToBase64(str){
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return btoa(binary);
+}
+
+function base64ToUtf8(b64){
+    // GitHub wraps content in newlines every ~60 chars; atob throws on those.
+    const binary = atob(b64.replace(/\n/g, ''));
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+}
+
+// ===== ESCAPING =====
+function escapeHtml(str){
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str){
+    return escapeHtml(str).replace(/"/g, '&quot;');
+}
+
+// ===== SLUGS =====
+function slugify(str){
+    return String(str)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'post';
+}
+
+function uniqueSlug(baseSlug, existingSlugs){
+    let slug = baseSlug;
+    let n = 2;
+    while(existingSlugs.includes(slug)){
+        slug = `${baseSlug}-${n}`;
+        n++;
+    }
+    return slug;
+}
+
+// ===== GITHUB API =====
+function getToken(){
+    return localStorage.getItem(TOKEN_KEY);
+}
+
+function authHeaders(token){
+    return {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json'
+    };
+}
+
+async function apiError(res){
+    if(res.status === 401) return new Error('Token invalid or expired. Please log in again.');
+    if(res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0'){
+        const resetAt = new Date(Number(res.headers.get('x-ratelimit-reset')) * 1000);
+        return new Error(`GitHub API rate limit hit. Resets at ${resetAt.toLocaleTimeString()}.`);
+    }
+    if(res.status === 403) return new Error('Token lacks required permission (Contents: Read and write) for this repo.');
+    if(res.status === 404) return new Error('File or repo not found -- check the token\'s repository access.');
+    if(res.status === 409 || res.status === 422) return new Error('CONFLICT');
+    const body = await res.text().catch(() => '');
+    return new Error(`GitHub API error ${res.status}: ${body.slice(0, 200)}`);
+}
+
+async function apiRequest(path, options = {}){
+    const token = getToken();
+    if(!token){
+        handleLogout();
+        throw new Error('Not logged in.');
+    }
+
+    const res = await fetch(`${API}${path}`, {
+        ...options,
+        headers: { ...authHeaders(token), ...(options.headers || {}) }
+    });
+
+    if(res.status === 401){
+        localStorage.removeItem(TOKEN_KEY);
+        alert('Your session token is no longer valid. Please log in again.');
+        location.reload();
+        throw new Error('Unauthorized');
+    }
+    if(!res.ok) throw await apiError(res);
+    return res;
+}
+
+async function validateToken(token){
+    const res = await fetch(`${API}/contents/index.html?ref=main`, { headers: authHeaders(token) });
+    if(res.status === 401) throw new Error('Invalid or expired token.');
+    if(res.status === 403) throw new Error('Token valid but lacks Contents read/write permission for this repo.');
+    if(res.status === 404) throw new Error('Token valid but cannot see this repo -- check its repository access scope.');
+    if(!res.ok) throw new Error(`Unexpected error (${res.status}) validating token.`);
+    return true;
+}
+
+async function fetchIndexHtml(){
+    const res = await apiRequest('/contents/index.html?ref=main');
+    const json = await res.json();
+    return { html: base64ToUtf8(json.content), sha: json.sha };
+}
+
+async function putIndexHtml(newHtml, sha, message){
+    const res = await apiRequest('/contents/index.html', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message,
+            content: utf8ToBase64(newHtml),
+            sha,
+            branch: 'main'
+        })
+    });
+    return res.json();
+}
+
+// ===== IMAGE UPLOAD =====
+async function resizeImageToBlob(file, { maxDim = 1600, quality = 0.82 } = {}){
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+}
+
+function blobToBase64(blob){
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+// GitHub's Contents API has a practical ~1MB ceiling per file, and base64
+// inflates size by ~33% -- so the real binary budget is closer to ~700KB.
+async function uploadImage(file, slugHint){
+    let blob = await resizeImageToBlob(file, { maxDim: 1600, quality: 0.82 });
+    if(blob.size > 700000){
+        blob = await resizeImageToBlob(file, { maxDim: 1200, quality: 0.6 });
+    }
+    if(blob.size > 700000){
+        throw new Error('This image is too large even after compression. Try a smaller or simpler image.');
+    }
+
+    const b64 = await blobToBase64(blob);
+    const filename = `${slugHint}-${Date.now()}.jpg`;
+    const path = `photos/${filename}`;
+
+    await apiRequest(`/contents/${path}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: `Upload blog image: ${filename}`,
+            content: b64,
+            branch: 'main'
+        })
+    });
+
+    return path;
+}
+
+// ===== BLOG-PREVIEW MARKUP =====
+function buildBlogPreviewHtml(post){
+    // post = { slug, title, summary, tags: [...], date, imgPath, bodyHtml }
+    const tagsAttr = post.tags.join(' ');
+    const tagsDisplay = post.tags.map(t => '#' + t).join(' ');
+    return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+                <img src="${escapeAttr(post.imgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
+                <h2>${escapeHtml(post.title)}</h2>
+                <p class="summary">${escapeHtml(post.summary)}</p>
+                <p class="tags">${escapeHtml(tagsDisplay)}</p>
+
+                <div class="full-content">
+                    <h1>${escapeHtml(post.title)}</h1>
+                    <img src="${escapeAttr(post.imgPath)}" class="blog-img-full" alt="${escapeAttr(post.title)}">
+                    ${post.bodyHtml}
+                </div>
+            </div>`;
+}
+
+// ===== STRING-LEVEL SPLICING (never a full DOMParser round-trip on write --
+// that can silently reformat unrelated markup and drops the doctype) =====
+function getAnchorBounds(html){
+    const start = html.indexOf(ANCHOR_START);
+    const end = html.indexOf(ANCHOR_END);
+    if(start === -1 || end === -1 || end < start){
+        throw new Error('Could not find the blog-list anchor comments in index.html -- they may have been removed. Aborting to avoid corrupting the file.');
+    }
+    return { start, end };
+}
+
+function indexOfDivTag(html, fromIndex){
+    const m = html.slice(fromIndex).match(/<div[\s>]/i);
+    return m ? fromIndex + m.index : -1;
+}
+
+function findMatchingDivClose(html, openTagIndex){
+    let pos = html.indexOf('>', openTagIndex) + 1;
+    let depth = 1;
+    while(depth > 0){
+        const nextOpen = indexOfDivTag(html, pos);
+        const nextClose = html.indexOf('</div>', pos);
+        if(nextClose === -1) throw new Error('Malformed HTML while locating the end of a blog-preview block.');
+        if(nextOpen !== -1 && nextOpen < nextClose){
+            depth++;
+            pos = html.indexOf('>', nextOpen) + 1;
+        } else {
+            depth--;
+            pos = nextClose + '</div>'.length;
+        }
+    }
+    return pos;
+}
+
+function findPostBlock(html, slug){
+    const { start, end } = getAnchorBounds(html);
+    const region = html.slice(start, end);
+    const marker = `data-slug="${slug}"`;
+    const markerIdx = region.indexOf(marker);
+    if(markerIdx === -1){
+        throw new Error(`Post "${slug}" not found -- it may have been edited or deleted since this page loaded. Reload and try again.`);
+    }
+    const blockStartInRegion = region.lastIndexOf('<div class="blog-preview"', markerIdx);
+    if(blockStartInRegion === -1){
+        throw new Error(`Could not locate the start of post "${slug}"'s block.`);
+    }
+    const blockEndInRegion = findMatchingDivClose(region, blockStartInRegion);
+    return {
+        absoluteStart: start + blockStartInRegion,
+        absoluteEnd: start + blockEndInRegion
+    };
+}
+
+function spliceInsertPost(html, blockHtml){
+    const { start } = getAnchorBounds(html);
+    const insertAt = start + ANCHOR_START.length;
+    return html.slice(0, insertAt) + '\n\n            ' + blockHtml.trim() + html.slice(insertAt);
+}
+
+function spliceReplacePost(html, slug, newBlockHtml){
+    const { absoluteStart, absoluteEnd } = findPostBlock(html, slug);
+    return html.slice(0, absoluteStart) + newBlockHtml.trim() + html.slice(absoluteEnd);
+}
+
+function spliceDeletePost(html, slug){
+    const { absoluteStart, absoluteEnd } = findPostBlock(html, slug);
+    return html.slice(0, absoluteStart) + html.slice(absoluteEnd);
+}
+
+// ===== READING POSTS (DOMParser is fine for reading, never for writing) =====
+function extractBodyHtml(fullContentEl){
+    // buildBlogPreviewHtml() always prepends an <h1> + .blog-img-full ahead of
+    // the authored body -- strip those back out so editing doesn't duplicate them.
+    const clone = fullContentEl.cloneNode(true);
+    const h1 = clone.querySelector('h1');
+    if(h1) h1.remove();
+    const img = clone.querySelector('.blog-img-full');
+    if(img) img.remove();
+    return clone.innerHTML.trim();
+}
+
+function parsePosts(html){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return Array.from(doc.querySelectorAll('.blog-preview')).map(el => ({
+        slug: el.dataset.slug,
+        title: el.querySelector('h2') ? el.querySelector('h2').textContent : '',
+        summary: el.querySelector('.summary') ? el.querySelector('.summary').textContent : '',
+        date: el.dataset.date,
+        tags: (el.dataset.tags || '').split(' ').filter(Boolean),
+        imgPath: el.querySelector('.blog-img') ? el.querySelector('.blog-img').getAttribute('src') : '',
+        bodyHtml: el.querySelector('.full-content') ? extractBodyHtml(el.querySelector('.full-content')) : ''
+    }));
+}
+
+// ===== UI STATE =====
+let quill = null;
+let currentTags = [];
+let editingSlug = null; // null while creating a new post
+let existingImgPath = null; // kept when editing and no new file was picked
+
+function initQuill(){
+    if(quill) return;
+    quill = new Quill('#quillEditor', {
+        theme: 'snow',
+        modules: {
+            toolbar: {
+                container: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ align: [] }],
+                    [{ indent: '-1' }, { indent: '+1' }],
+                    ['blockquote'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link', 'image'],
+                    ['clean']
+                ],
+                handlers: { image: handleQuillImageInsert }
+            }
+        }
+    });
+}
+
+function handleQuillImageInsert(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+        const file = input.files[0];
+        if(!file) return;
+        const range = quill.getSelection(true);
+        setFormStatus('Uploading image...');
+        try{
+            const slugHint = editingSlug || slugify(document.getElementById('fieldTitle').value) || 'post';
+            const path = await uploadImage(file, slugHint);
+            quill.insertEmbed(range.index, 'image', path);
+            quill.setSelection(range.index + 1);
+            setFormStatus('');
+        }catch(e){
+            setFormStatus('Image upload failed: ' + e.message);
+        }
+    };
+    input.click();
+}
+
+// ===== TOKEN GATE =====
+async function handleTokenSubmit(){
+    const input = document.getElementById('tokenInput');
+    const errorEl = document.getElementById('gateError');
+    const token = input.value.trim();
+    errorEl.textContent = '';
+    if(!token){ errorEl.textContent = 'Paste a token first.'; return; }
+
+    const btn = document.getElementById('tokenSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Checking...';
+    try{
+        await validateToken(token);
+        localStorage.setItem(TOKEN_KEY, token);
+        unlockEditor();
+    }catch(e){
+        errorEl.textContent = e.message;
+    }finally{
+        btn.disabled = false;
+        btn.textContent = 'Unlock';
+    }
+}
+
+function handleLogout(){
+    localStorage.removeItem(TOKEN_KEY);
+    location.reload();
+}
+
+function unlockEditor(){
+    document.getElementById('gate').classList.remove('active');
+    document.getElementById('editorPage').classList.add('active');
+    initQuill();
+    showListView();
+}
+
+// ===== LIST VIEW =====
+async function refreshPostList(){
+    const statusEl = document.getElementById('listStatus');
+    const listEl = document.getElementById('postList');
+    statusEl.textContent = 'Loading...';
+    listEl.innerHTML = '';
+    try{
+        const { html } = await fetchIndexHtml();
+        const posts = parsePosts(html);
+        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if(posts.length === 0){
+            statusEl.textContent = 'No posts yet.';
+            return;
+        }
+        statusEl.textContent = '';
+
+        posts.forEach(post => {
+            const row = document.createElement('div');
+            row.className = 'admin-post-row';
+            row.innerHTML = `
+                <div>
+                    <div class="admin-post-title">${escapeHtml(post.title)}</div>
+                    <div class="admin-post-meta">${escapeHtml(post.date)} &middot; ${escapeHtml(post.tags.map(t => '#' + t).join(' '))}</div>
+                </div>
+                <div class="admin-post-actions">
+                    <button type="button" data-action="edit">Edit</button>
+                    <button type="button" class="danger" data-action="delete">Delete</button>
+                </div>
+            `;
+            row.querySelector('[data-action="edit"]').onclick = () => showEditPostForm(post);
+            row.querySelector('[data-action="delete"]').onclick = () => handleDelete(post.slug, post.title);
+            listEl.appendChild(row);
+        });
+    }catch(e){
+        statusEl.textContent = 'Error: ' + e.message;
+    }
+}
+
+function showListView(){
+    document.getElementById('listView').style.display = 'block';
+    document.getElementById('formView').style.display = 'none';
+    refreshPostList();
+}
+
+async function handleDelete(slug, title){
+    if(!confirm(`Delete "${title}"? This can't be undone from the admin page (though it stays recoverable from git history).`)) return;
+
+    try{
+        const { html, sha } = await fetchIndexHtml();
+        const newHtml = spliceDeletePost(html, slug);
+        await putIndexHtml(newHtml, sha, `Delete blog post: ${title}`);
+        showToast('Post deleted.');
+        refreshPostList();
+    }catch(e){
+        showToast('Delete failed: ' + e.message, true);
+    }
+}
+
+// ===== FORM VIEW =====
+function showNewPostForm(){
+    editingSlug = null;
+    existingImgPath = null;
+    currentTags = [];
+
+    document.getElementById('fieldTitle').value = '';
+    document.getElementById('fieldSummary').value = '';
+    document.getElementById('fieldDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('fieldImage').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    quill.setContents([]);
+    renderTagChips();
+    setFormStatus('');
+
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('formView').style.display = 'block';
+}
+
+function showEditPostForm(post){
+    editingSlug = post.slug;
+    existingImgPath = post.imgPath;
+    currentTags = post.tags.slice();
+
+    document.getElementById('fieldTitle').value = post.title;
+    document.getElementById('fieldSummary').value = post.summary;
+    document.getElementById('fieldDate').value = post.date;
+    document.getElementById('fieldImage').value = '';
+
+    const preview = document.getElementById('imagePreview');
+    if(post.imgPath){
+        preview.src = post.imgPath;
+        preview.style.display = 'block';
+    }else{
+        preview.style.display = 'none';
+    }
+
+    quill.setContents([]);
+    quill.clipboard.dangerouslyPasteHTML(post.bodyHtml);
+    renderTagChips();
+    setFormStatus('');
+
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('formView').style.display = 'block';
+}
+
+function handleTagKeydown(e){
+    if(e.key === 'Enter' || e.key === ','){
+        e.preventDefault();
+        const raw = e.target.value.trim();
+        if(raw){
+            const tag = slugify(raw);
+            if(tag && !currentTags.includes(tag)) currentTags.push(tag);
+        }
+        e.target.value = '';
+        renderTagChips();
+    }
+}
+
+function renderTagChips(){
+    const wrap = document.getElementById('tagInputWrap');
+    Array.from(wrap.querySelectorAll('.admin-tag-chip')).forEach(el => el.remove());
+    const input = document.getElementById('fieldTagEntry');
+    currentTags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'admin-tag-chip';
+        chip.innerHTML = `${escapeHtml(tag)} <button type="button" aria-label="Remove tag ${escapeAttr(tag)}">&times;</button>`;
+        chip.querySelector('button').onclick = () => {
+            currentTags = currentTags.filter(t => t !== tag);
+            renderTagChips();
+        };
+        wrap.insertBefore(chip, input);
+    });
+}
+
+function handleImageChange(e){
+    const file = e.target.files[0];
+    const preview = document.getElementById('imagePreview');
+    if(!file){
+        preview.style.display = 'none';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function setFormStatus(msg){
+    document.getElementById('formStatus').textContent = msg;
+}
+
+// ===== PUBLISH =====
+async function handlePublish(){
+    const title = document.getElementById('fieldTitle').value.trim();
+    const summary = document.getElementById('fieldSummary').value.trim();
+    const date = document.getElementById('fieldDate').value;
+    const imageFile = document.getElementById('fieldImage').files[0];
+    const bodyHtml = quill.root.innerHTML;
+
+    if(!title){ setFormStatus('Title is required.'); return; }
+    if(!date){ setFormStatus('Date is required.'); return; }
+    if(!imageFile && !existingImgPath){ setFormStatus('A cover image is required.'); return; }
+
+    const btn = document.getElementById('publishBtn');
+    btn.disabled = true;
+
+    try{
+        setFormStatus('Fetching latest post list...');
+        let { html, sha } = await fetchIndexHtml();
+        const existingSlugs = parsePosts(html).map(p => p.slug).filter(s => s !== editingSlug);
+
+        let slug = editingSlug;
+        if(!slug){
+            slug = uniqueSlug(slugify(title), existingSlugs);
+        }
+
+        let imgPath = existingImgPath;
+        if(imageFile){
+            setFormStatus('Uploading cover image...');
+            imgPath = await uploadImage(imageFile, slug);
+        }
+
+        const post = { slug, title, summary, tags: currentTags, date, imgPath, bodyHtml };
+        const blockHtml = buildBlogPreviewHtml(post);
+
+        setFormStatus('Saving post...');
+        // re-fetch immediately before the write in case the image upload above took a while
+        ({ html, sha } = await fetchIndexHtml());
+
+        const newHtml = editingSlug
+            ? spliceReplacePost(html, editingSlug, blockHtml)
+            : spliceInsertPost(html, blockHtml);
+
+        await putIndexHtml(newHtml, sha, editingSlug ? `Edit blog post: ${title}` : `Add blog post: ${title}`);
+
+        showToast('Published! GitHub Pages will redeploy in about a minute.');
+        showListView();
+    }catch(e){
+        if(e.message === 'CONFLICT'){
+            setFormStatus('index.html changed since this page loaded (maybe from another tab, or a manual push). Your form is unchanged -- click Publish again to retry with the latest version.');
+        }else{
+            setFormStatus('Error: ' + e.message);
+        }
+    }finally{
+        btn.disabled = false;
+    }
+}
+
+// ===== TOAST =====
+let toastTimer = null;
+function showToast(msg, isError){
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = isError ? 'admin-toast error' : 'admin-toast';
+    toast.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 5000);
+}
+
+// ===== INIT =====
+(async function init(){
+    const saved = getToken();
+    if(!saved) return;
+    try{
+        await validateToken(saved);
+        unlockEditor();
+    }catch(e){
+        localStorage.removeItem(TOKEN_KEY);
+        document.getElementById('gateError').textContent = 'Saved token no longer works: ' + e.message;
+    }
+})();
