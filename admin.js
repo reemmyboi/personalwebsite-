@@ -362,11 +362,15 @@ function handleQuillImageInsert(){
         const file = input.files[0];
         if(!file) return;
         const range = quill.getSelection(true);
+        // alt text is required for accessibility -- fall back to the post title
+        // rather than leaving inline images with no alt attribute at all
+        const altText = prompt('Alt text for this image (for screen readers):', '') || document.getElementById('fieldTitle').value.trim() || 'Blog post image';
         setFormStatus('Uploading image...');
         try{
             const slugHint = editingSlug || slugify(document.getElementById('fieldTitle').value) || 'post';
             const path = await uploadImage(file, slugHint);
             quill.insertEmbed(range.index, 'image', path);
+            quill.formatText(range.index, 1, 'alt', altText);
             quill.setSelection(range.index + 1);
             setFormStatus('');
         }catch(e){
