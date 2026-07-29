@@ -184,12 +184,14 @@ async function uploadImage(file, slugHint){
 
 // ===== BLOG-PREVIEW MARKUP =====
 function buildBlogPreviewHtml(post){
-    // post = { slug, title, summary, tags: [...], date, previewImgPath, headerImgPath, bodyHtml }
+    // post = { slug, title, summary, tags: [...], date, previewImgPath, headerImgPath, bodyHtml, parentSlug }
     const tagsAttr = post.tags.join(' ');
     const tagsDisplay = post.tags.map(t => '#' + t).join(' ');
     // header image is optional -- reuse the preview image if none was given
     const headerImgPath = post.headerImgPath || post.previewImgPath;
-    return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
+    // parentSlug is optional -- marks this post as an episode nested under a series post
+    const parentAttr = post.parentSlug ? ` data-parent="${escapeAttr(post.parentSlug)}"` : '';
+    return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}"${parentAttr} onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
                 <img src="${escapeAttr(post.previewImgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
                 <h2>${escapeHtml(post.title)}</h2>
                 <p class="summary">${escapeHtml(post.summary)}</p>
@@ -301,7 +303,8 @@ function parsePosts(html){
             // buildBlogPreviewHtml(), and the edit form should show it as blank
             // (still-optional) rather than as a distinct chosen image
             headerImgPath: headerImgPath && headerImgPath !== previewImgPath ? headerImgPath : '',
-            bodyHtml: el.querySelector('.full-content') ? extractBodyHtml(el.querySelector('.full-content')) : ''
+            bodyHtml: el.querySelector('.full-content') ? extractBodyHtml(el.querySelector('.full-content')) : '',
+            parentSlug: el.dataset.parent || ''
         };
     });
 }
@@ -312,6 +315,22 @@ let currentTags = [];
 let editingSlug = null; // null while creating a new post
 let existingPreviewImgPath = null; // kept when editing and no new file was picked
 let existingHeaderImgPath = null; // '' means "reuse the preview image", same as never having set one
+let allPosts = []; // refreshed by refreshPostList(); used to populate the series/parent dropdown without a refetch
+
+// populates the "Belongs to series" dropdown with every top-level post
+// (episodes can't themselves be a series parent, so >2-level nesting isn't possible)
+function populateParentOptions(excludeSlug){
+    const select = document.getElementById('fieldParent');
+    select.innerHTML = '<option value="">None &mdash; standalone post</option>';
+    allPosts
+        .filter(p => p.slug !== excludeSlug && !p.parentSlug)
+        .forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.slug;
+            opt.textContent = p.title;
+            select.appendChild(opt);
+        });
+}
 
 function initQuill(){
     if(quill) return;
@@ -402,6 +421,7 @@ async function refreshPostList(){
         const { html } = await fetchIndexHtml();
         const posts = parsePosts(html);
         posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allPosts = posts;
 
         if(posts.length === 0){
             statusEl.textContent = 'No posts yet.';
@@ -410,12 +430,15 @@ async function refreshPostList(){
         statusEl.textContent = '';
 
         posts.forEach(post => {
+            const parentPost = post.parentSlug ? posts.find(p => p.slug === post.parentSlug) : null;
+            const parentLine = parentPost ? `<div class="admin-post-parent">&#8618; Part of: ${escapeHtml(parentPost.title)}</div>` : '';
             const row = document.createElement('div');
             row.className = 'admin-post-row';
             row.innerHTML = `
                 <div>
                     <div class="admin-post-title">${escapeHtml(post.title)}</div>
                     <div class="admin-post-meta">${escapeHtml(post.date)} &middot; ${escapeHtml(post.tags.map(t => '#' + t).join(' '))}</div>
+                    ${parentLine}
                 </div>
                 <div class="admin-post-actions">
                     <button type="button" data-action="edit">Edit</button>
@@ -438,7 +461,11 @@ function showListView(){
 }
 
 async function handleDelete(slug, title){
-    if(!confirm(`Delete "${title}"? This can't be undone from the admin page (though it stays recoverable from git history).`)) return;
+    const children = allPosts.filter(p => p.parentSlug === slug);
+    const message = children.length > 0
+        ? `"${title}" has ${children.length} episode(s) nested under it (${children.map(c => c.title).join(', ')}). Deleting it won't delete those episodes, but they'll no longer be reachable from the site since they only show up nested under this post. Delete anyway?`
+        : `Delete "${title}"? This can't be undone from the admin page (though it stays recoverable from git history).`;
+    if(!confirm(message)) return;
 
     try{
         const { html, sha } = await fetchIndexHtml();
@@ -465,6 +492,8 @@ function showNewPostForm(){
     document.getElementById('fieldHeaderImage').value = '';
     document.getElementById('previewImagePreview').style.display = 'none';
     document.getElementById('headerImagePreview').style.display = 'none';
+    populateParentOptions(null);
+    document.getElementById('fieldParent').value = '';
     quill.setContents([]);
     renderTagChips();
     setFormStatus('');
@@ -500,6 +529,9 @@ function showEditPostForm(post){
     }else{
         headerImg.style.display = 'none';
     }
+
+    populateParentOptions(post.slug);
+    document.getElementById('fieldParent').value = post.parentSlug || '';
 
     quill.setContents([]);
     quill.clipboard.dangerouslyPasteHTML(post.bodyHtml);
@@ -565,6 +597,7 @@ async function handlePublish(){
     const date = document.getElementById('fieldDate').value;
     const previewImageFile = document.getElementById('fieldPreviewImage').files[0];
     const headerImageFile = document.getElementById('fieldHeaderImage').files[0];
+    const parentSlug = document.getElementById('fieldParent').value;
     const bodyHtml = quill.root.innerHTML;
 
     if(!title){ setFormStatus('Title is required.'); return; }
@@ -598,7 +631,7 @@ async function handlePublish(){
             headerImgPath = await uploadImage(headerImageFile, `${slug}-header`);
         }
 
-        const post = { slug, title, summary, tags: currentTags, date, previewImgPath, headerImgPath, bodyHtml };
+        const post = { slug, title, summary, tags: currentTags, date, previewImgPath, headerImgPath, bodyHtml, parentSlug };
         const blockHtml = buildBlogPreviewHtml(post);
 
         setFormStatus('Saving post...');
