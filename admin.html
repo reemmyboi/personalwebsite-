@@ -4,11 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<!-- script-src needs 'unsafe-inline' because this page's buttons/inputs use
+     inline onclick/onchange handlers throughout -- connect-src is the
+     directive that actually matters here: it stops any injected or
+     compromised script from sending the GitHub token anywhere but GitHub -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.github.com; font-src 'self'; object-src 'none'; base-uri 'self';">
 <title>Blog Admin</title>
 
 <link rel="icon" type="image/png" sizes="32x32" href="photos/favicon-32x32.png">
 <link rel="stylesheet" href="styles.css">
-<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" integrity="sha384-cPa8kzsYWhqpAfWOLWYIw3V0BhPi/m3lrd8tBTPxr2NrYCHRVZ7xy1cEoRGOM/03" crossorigin="anonymous">
 </head>
 
 <body>
@@ -38,8 +43,8 @@
 <section id="editorPage" class="page">
     <div class="card">
         <div class="admin-toolbar">
-            <h1 style="margin:0;">Blog Admin</h1>
-            <button type="button" class="back-btn" onclick="handleLogout()" style="margin:0;">Log out</button>
+            <h1>Blog Admin</h1>
+            <button type="button" class="back-btn" onclick="handleLogout()">Log out</button>
         </div>
 
         <!-- LIST VIEW -->
@@ -53,7 +58,7 @@
         </div>
 
         <!-- FORM VIEW -->
-        <div id="formView" style="display:none">
+        <div id="formView">
             <button type="button" class="back-btn" onclick="showListView()">⬅ Back to list</button>
 
             <div class="admin-form">
@@ -87,6 +92,7 @@
 
                 <label for="quillEditor">Body</label>
                 <div id="quillEditor"></div>
+                <p class="admin-hint">Click any image already in the post to change its width (try ~45% so two images sit side by side).</p>
 
                 <p id="formStatus" class="admin-status"></p>
                 <button type="button" id="publishBtn" onclick="handlePublish()">Publish</button>
@@ -95,9 +101,9 @@
     </div>
 </section>
 
-<div id="toast" class="admin-toast" style="display:none"></div>
+<div id="toast" class="admin-toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js" integrity="sha384-QUJ+ckWz1M+a7w0UfG1sEn4pPrbQwSxGm/1TIPyioqXBrwuT9l4f9gdHWLDLbVWI" crossorigin="anonymous"></script>
 <script src="admin.js"></script>
 </body>
 </html>

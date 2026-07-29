@@ -353,6 +353,16 @@ h1{
     display:block;
 }
 
+/* an image the author has explicitly sized down (via the editor's "Resize
+   selected image" control) gets a width attribute -- let it flow inline
+   instead of forcing its own full-width row, so a couple of small images
+   (or an image and text) can sit side by side */
+#blogContent img[width]{
+    display:inline-block;
+    vertical-align:top;
+    margin:8px;
+}
+
 /* "Part of <series>" link shown above an episode post */
 .episode-parent-link{
     color:#94a3b8;
@@ -557,6 +567,15 @@ footer{
     flex-wrap:wrap;
 }
 
+.admin-toolbar h1,
+.admin-toolbar .back-btn{
+    margin:0;
+}
+
+#formView{
+    display:none;
+}
+
 .admin-post-row{
     display:flex;
     justify-content:space-between;
@@ -698,6 +717,7 @@ footer{
 #quillEditor .ql-editor img{
     max-width:100%;
     border-radius:8px;
+    cursor:pointer;
 }
 
 .ql-toolbar.ql-snow{
@@ -781,6 +801,7 @@ footer{
 }
 
 .admin-toast{
+    display:none;
     position:fixed;
     bottom:20px;
     right:20px;

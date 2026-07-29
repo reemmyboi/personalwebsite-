@@ -352,6 +352,22 @@ function initQuill(){
             }
         }
     });
+
+    // clicking an image already in the post opens the same width prompt used
+    // at insert time, so images can be resized (or paired up side by side)
+    // after the fact -- a plain click doesn't select the embed as a Quill
+    // range (clicking an atomic embed just places the cursor next to it, it
+    // doesn't set range.length to 1), so this has to work off the DOM node
+    // the click actually landed on rather than quill.getSelection()
+    quill.root.addEventListener('click', (e) => {
+        if(e.target.tagName !== 'IMG') return;
+        const blot = Quill.find(e.target);
+        if(!blot) return;
+        const index = quill.getIndex(blot);
+        const current = (e.target.getAttribute('width') || '100').replace('%', '');
+        const width = promptImageWidth(current);
+        quill.formatText(index, 1, 'width', width < 100 ? width + '%' : '');
+    });
 }
 
 function handleQuillImageInsert(){
@@ -365,12 +381,14 @@ function handleQuillImageInsert(){
         // alt text is required for accessibility -- fall back to the post title
         // rather than leaving inline images with no alt attribute at all
         const altText = prompt('Alt text for this image (for screen readers):', '') || document.getElementById('fieldTitle').value.trim() || 'Blog post image';
+        const width = promptImageWidth('100');
         setFormStatus('Uploading image...');
         try{
             const slugHint = editingSlug || slugify(document.getElementById('fieldTitle').value) || 'post';
             const path = await uploadImage(file, slugHint);
             quill.insertEmbed(range.index, 'image', path);
             quill.formatText(range.index, 1, 'alt', altText);
+            if(width < 100) quill.formatText(range.index, 1, 'width', width + '%');
             quill.setSelection(range.index + 1);
             setFormStatus('');
         }catch(e){
@@ -378,6 +396,16 @@ function handleQuillImageInsert(){
         }
     };
     input.click();
+}
+
+// asks for a width as a % of the post column; clamped to a sane range,
+// falls back to fallback (as a number) on cancel/blank/garbage input
+function promptImageWidth(fallback){
+    const input = prompt('Image width as a % of the post column (100 = full width; try around 45 if you want two images to sit side by side):', fallback);
+    if(input === null) return parseInt(fallback, 10);
+    const parsed = parseInt(input, 10);
+    if(Number.isNaN(parsed)) return parseInt(fallback, 10);
+    return Math.min(100, Math.max(10, parsed));
 }
 
 // ===== TOKEN GATE =====
