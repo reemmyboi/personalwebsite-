@@ -592,17 +592,96 @@ footer{
 }
 
 #quillEditor{
-    background:#e5e7eb;
+    background:#020617;
     border-radius:0 0 10px 10px;
 }
 
 #quillEditor .ql-editor{
     min-height:220px;
+    color:#e5e7eb;
+}
+
+#quillEditor .ql-editor.ql-blank::before{
+    color:#64748b;
+    font-style:normal;
+}
+
+#quillEditor .ql-editor img{
+    max-width:100%;
+    border-radius:8px;
 }
 
 .ql-toolbar.ql-snow{
     border-radius:10px 10px 0 0;
-    background:#e5e7eb;
+    background:#1e293b;
+    border-color:rgba(255,255,255,.1) !important;
+}
+
+.ql-container.ql-snow{
+    border-color:rgba(255,255,255,.1) !important;
+}
+
+.ql-toolbar.ql-snow .ql-stroke{
+    stroke:#e5e7eb;
+}
+
+.ql-toolbar.ql-snow .ql-fill{
+    fill:#e5e7eb;
+}
+
+.ql-toolbar.ql-snow .ql-picker{
+    color:#e5e7eb;
+}
+
+.ql-toolbar.ql-snow button:hover,
+.ql-toolbar.ql-snow button.ql-active,
+.ql-toolbar.ql-snow .ql-picker-label:hover,
+.ql-toolbar.ql-snow .ql-picker-label.ql-active{
+    color:#60a5fa;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke,
+.ql-toolbar.ql-snow button.ql-active .ql-stroke,
+.ql-toolbar.ql-snow .ql-picker-label:hover .ql-stroke,
+.ql-toolbar.ql-snow .ql-picker-label.ql-active .ql-stroke{
+    stroke:#60a5fa;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill,
+.ql-toolbar.ql-snow button.ql-active .ql-fill{
+    fill:#60a5fa;
+}
+
+.ql-snow .ql-picker-options{
+    background:#1e293b;
+    border-color:rgba(255,255,255,.1) !important;
+}
+
+.ql-snow .ql-picker-item{
+    color:#e5e7eb;
+}
+
+.ql-snow .ql-picker-item:hover{
+    color:#60a5fa;
+}
+
+.ql-snow .ql-tooltip{
+    background:#1e293b !important;
+    border-color:rgba(255,255,255,.1) !important;
+    color:#e5e7eb !important;
+    box-shadow:0 10px 25px rgba(0,0,0,.6) !important;
+}
+
+.ql-snow .ql-tooltip input[type=text]{
+    background:#020617;
+    color:#e5e7eb;
+    border:1px solid rgba(255,255,255,.1);
+    outline:none;
+}
+
+.ql-snow .ql-tooltip a.ql-action::after,
+.ql-snow .ql-tooltip a.ql-remove::before{
+    color:#60a5fa;
 }
 
 .admin-status{

@@ -72,9 +72,13 @@
                 <label for="fieldDate">Date</label>
                 <input type="date" id="fieldDate">
 
-                <label for="fieldImage">Cover image</label>
-                <input type="file" id="fieldImage" accept="image/*" onchange="handleImageChange(event)">
-                <img id="imagePreview" class="admin-img-preview" alt="Cover image preview">
+                <label for="fieldPreviewImage">Preview image <span class="admin-hint">(shown on the blog list card)</span></label>
+                <input type="file" id="fieldPreviewImage" accept="image/*" onchange="handleImageChange(event, 'preview')">
+                <img id="previewImagePreview" class="admin-img-preview" alt="Preview image thumbnail">
+
+                <label for="fieldHeaderImage">Header image <span class="admin-hint">(shown at the top of the full post &mdash; leave blank to reuse the preview image)</span></label>
+                <input type="file" id="fieldHeaderImage" accept="image/*" onchange="handleImageChange(event, 'header')">
+                <img id="headerImagePreview" class="admin-img-preview" alt="Header image thumbnail">
 
                 <label for="quillEditor">Body</label>
                 <div id="quillEditor"></div>

@@ -184,18 +184,20 @@ async function uploadImage(file, slugHint){
 
 // ===== BLOG-PREVIEW MARKUP =====
 function buildBlogPreviewHtml(post){
-    // post = { slug, title, summary, tags: [...], date, imgPath, bodyHtml }
+    // post = { slug, title, summary, tags: [...], date, previewImgPath, headerImgPath, bodyHtml }
     const tagsAttr = post.tags.join(' ');
     const tagsDisplay = post.tags.map(t => '#' + t).join(' ');
+    // header image is optional -- reuse the preview image if none was given
+    const headerImgPath = post.headerImgPath || post.previewImgPath;
     return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}" onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
-                <img src="${escapeAttr(post.imgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
+                <img src="${escapeAttr(post.previewImgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
                 <h2>${escapeHtml(post.title)}</h2>
                 <p class="summary">${escapeHtml(post.summary)}</p>
                 <p class="tags">${escapeHtml(tagsDisplay)}</p>
 
                 <div class="full-content">
                     <h1>${escapeHtml(post.title)}</h1>
-                    <img src="${escapeAttr(post.imgPath)}" class="blog-img-full" alt="${escapeAttr(post.title)}">
+                    <img src="${escapeAttr(headerImgPath)}" class="blog-img-full" alt="${escapeAttr(post.title)}">
                     ${post.bodyHtml}
                 </div>
             </div>`;
@@ -284,22 +286,32 @@ function extractBodyHtml(fullContentEl){
 
 function parsePosts(html){
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    return Array.from(doc.querySelectorAll('.blog-preview')).map(el => ({
-        slug: el.dataset.slug,
-        title: el.querySelector('h2') ? el.querySelector('h2').textContent : '',
-        summary: el.querySelector('.summary') ? el.querySelector('.summary').textContent : '',
-        date: el.dataset.date,
-        tags: (el.dataset.tags || '').split(' ').filter(Boolean),
-        imgPath: el.querySelector('.blog-img') ? el.querySelector('.blog-img').getAttribute('src') : '',
-        bodyHtml: el.querySelector('.full-content') ? extractBodyHtml(el.querySelector('.full-content')) : ''
-    }));
+    return Array.from(doc.querySelectorAll('.blog-preview')).map(el => {
+        const previewImgPath = el.querySelector('.blog-img') ? el.querySelector('.blog-img').getAttribute('src') : '';
+        const headerImgPath = el.querySelector('.blog-img-full') ? el.querySelector('.blog-img-full').getAttribute('src') : '';
+        return {
+            slug: el.dataset.slug,
+            title: el.querySelector('h2') ? el.querySelector('h2').textContent : '',
+            summary: el.querySelector('.summary') ? el.querySelector('.summary').textContent : '',
+            date: el.dataset.date,
+            tags: (el.dataset.tags || '').split(' ').filter(Boolean),
+            previewImgPath,
+            // only treat the header image as "explicitly set" if it differs from
+            // the preview image -- otherwise it's just the fallback reuse from
+            // buildBlogPreviewHtml(), and the edit form should show it as blank
+            // (still-optional) rather than as a distinct chosen image
+            headerImgPath: headerImgPath && headerImgPath !== previewImgPath ? headerImgPath : '',
+            bodyHtml: el.querySelector('.full-content') ? extractBodyHtml(el.querySelector('.full-content')) : ''
+        };
+    });
 }
 
 // ===== UI STATE =====
 let quill = null;
 let currentTags = [];
 let editingSlug = null; // null while creating a new post
-let existingImgPath = null; // kept when editing and no new file was picked
+let existingPreviewImgPath = null; // kept when editing and no new file was picked
+let existingHeaderImgPath = null; // '' means "reuse the preview image", same as never having set one
 
 function initQuill(){
     if(quill) return;
@@ -442,14 +454,17 @@ async function handleDelete(slug, title){
 // ===== FORM VIEW =====
 function showNewPostForm(){
     editingSlug = null;
-    existingImgPath = null;
+    existingPreviewImgPath = null;
+    existingHeaderImgPath = null;
     currentTags = [];
 
     document.getElementById('fieldTitle').value = '';
     document.getElementById('fieldSummary').value = '';
     document.getElementById('fieldDate').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('fieldImage').value = '';
-    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('fieldPreviewImage').value = '';
+    document.getElementById('fieldHeaderImage').value = '';
+    document.getElementById('previewImagePreview').style.display = 'none';
+    document.getElementById('headerImagePreview').style.display = 'none';
     quill.setContents([]);
     renderTagChips();
     setFormStatus('');
@@ -460,20 +475,30 @@ function showNewPostForm(){
 
 function showEditPostForm(post){
     editingSlug = post.slug;
-    existingImgPath = post.imgPath;
+    existingPreviewImgPath = post.previewImgPath;
+    existingHeaderImgPath = post.headerImgPath;
     currentTags = post.tags.slice();
 
     document.getElementById('fieldTitle').value = post.title;
     document.getElementById('fieldSummary').value = post.summary;
     document.getElementById('fieldDate').value = post.date;
-    document.getElementById('fieldImage').value = '';
+    document.getElementById('fieldPreviewImage').value = '';
+    document.getElementById('fieldHeaderImage').value = '';
 
-    const preview = document.getElementById('imagePreview');
-    if(post.imgPath){
-        preview.src = post.imgPath;
-        preview.style.display = 'block';
+    const previewImg = document.getElementById('previewImagePreview');
+    if(post.previewImgPath){
+        previewImg.src = post.previewImgPath;
+        previewImg.style.display = 'block';
     }else{
-        preview.style.display = 'none';
+        previewImg.style.display = 'none';
+    }
+
+    const headerImg = document.getElementById('headerImagePreview');
+    if(post.headerImgPath){
+        headerImg.src = post.headerImgPath;
+        headerImg.style.display = 'block';
+    }else{
+        headerImg.style.display = 'none';
     }
 
     quill.setContents([]);
@@ -514,9 +539,9 @@ function renderTagChips(){
     });
 }
 
-function handleImageChange(e){
+function handleImageChange(e, kind){
     const file = e.target.files[0];
-    const preview = document.getElementById('imagePreview');
+    const preview = document.getElementById(kind === 'header' ? 'headerImagePreview' : 'previewImagePreview');
     if(!file){
         preview.style.display = 'none';
         return;
@@ -538,12 +563,13 @@ async function handlePublish(){
     const title = document.getElementById('fieldTitle').value.trim();
     const summary = document.getElementById('fieldSummary').value.trim();
     const date = document.getElementById('fieldDate').value;
-    const imageFile = document.getElementById('fieldImage').files[0];
+    const previewImageFile = document.getElementById('fieldPreviewImage').files[0];
+    const headerImageFile = document.getElementById('fieldHeaderImage').files[0];
     const bodyHtml = quill.root.innerHTML;
 
     if(!title){ setFormStatus('Title is required.'); return; }
     if(!date){ setFormStatus('Date is required.'); return; }
-    if(!imageFile && !existingImgPath){ setFormStatus('A cover image is required.'); return; }
+    if(!previewImageFile && !existingPreviewImgPath){ setFormStatus('A preview image is required.'); return; }
 
     const btn = document.getElementById('publishBtn');
     btn.disabled = true;
@@ -558,13 +584,21 @@ async function handlePublish(){
             slug = uniqueSlug(slugify(title), existingSlugs);
         }
 
-        let imgPath = existingImgPath;
-        if(imageFile){
-            setFormStatus('Uploading cover image...');
-            imgPath = await uploadImage(imageFile, slug);
+        let previewImgPath = existingPreviewImgPath;
+        if(previewImageFile){
+            setFormStatus('Uploading preview image...');
+            previewImgPath = await uploadImage(previewImageFile, `${slug}-preview`);
         }
 
-        const post = { slug, title, summary, tags: currentTags, date, imgPath, bodyHtml };
+        // header image is optional -- keep it blank (falls back to the
+        // preview image in buildBlogPreviewHtml) unless one was actually set
+        let headerImgPath = existingHeaderImgPath;
+        if(headerImageFile){
+            setFormStatus('Uploading header image...');
+            headerImgPath = await uploadImage(headerImageFile, `${slug}-header`);
+        }
+
+        const post = { slug, title, summary, tags: currentTags, date, previewImgPath, headerImgPath, bodyHtml };
         const blockHtml = buildBlogPreviewHtml(post);
 
         setFormStatus('Saving post...');
