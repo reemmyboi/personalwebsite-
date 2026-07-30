@@ -446,6 +446,51 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     const maxCatches = 3;
     let catches = 0;
     let fleeTimer = null;
+    let poofCtx = null;
+
+    // a quiet synthesized "poof" -- a short filtered noise burst with a
+    // quick pitch-down sweep, the same technique cartoon puff/pop sound
+    // effects use. Not a sample of any specific game's audio.
+    function playPoofSound(){
+        try{
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if(!AudioContextClass) return;
+            if(!poofCtx) poofCtx = new AudioContextClass();
+            if(poofCtx.state === 'suspended') poofCtx.resume();
+
+            const duration = 0.22;
+            const sampleRate = poofCtx.sampleRate;
+            const buffer = poofCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
+            const data = buffer.getChannelData(0);
+            for(let i = 0; i < data.length; i++){
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = poofCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = poofCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1800, poofCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(220, poofCtx.currentTime + duration);
+            filter.Q.value = 0.7;
+
+            // kept quiet on purpose -- peak gain of .07
+            const gainNode = poofCtx.createGain();
+            gainNode.gain.setValueAtTime(0, poofCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.07, poofCtx.currentTime + 0.015);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, poofCtx.currentTime + duration);
+
+            noise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(poofCtx.destination);
+
+            noise.start();
+            noise.stop(poofCtx.currentTime + duration);
+        }catch(e){
+            // sound is a nice-to-have here, never let it break the easter egg
+        }
+    }
 
     function randomizePosition(){
         const container = btn.closest('.tree-container');
@@ -484,6 +529,7 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     btn.addEventListener('click', (e) => {
         e.preventDefault();
         clearTimeout(fleeTimer);
+        playPoofSound();
         catches++;
 
         if(catches >= maxCatches){
@@ -529,8 +575,10 @@ function showPage(pageId){
 }
 
 // used both by clicking a preview card (openBlog above) and by clicking an
-// episode card, a "part of <series>" link, or a related-post card
-function openBlogBySlug(slug){
+// episode card, a "part of <series>" link, a related-post card, or the
+// overview card on a category page (that last one passes forceFullContent
+// so a post with episodes can still be read in full, not just as the hub)
+function openBlogBySlug(slug, forceFullContent){
     const blog = document.querySelector('.blog-preview[data-slug="' + CSS.escape(slug) + '"]');
     if(!blog) return;
 
@@ -549,7 +597,7 @@ function openBlogBySlug(slug){
     setTimeout(()=>{
         container.innerHTML = '';
 
-        if(episodes.length > 0){
+        if(episodes.length > 0 && !forceFullContent){
             // this post has episodes nested under it -- treat it as a
             // category page: a compact overview card up top, then the
             // episode row right below it, instead of a long write-up
@@ -557,6 +605,11 @@ function openBlogBySlug(slug){
         }else{
             container.innerHTML = blog.querySelector('.full-content').innerHTML;
             renderParentLink(container, blog);
+            if(episodes.length > 0){
+                // reached via the overview card's "read the full write-up"
+                // link -- still offer the episode row below the write-up
+                renderEpisodeList(container, episodes);
+            }
         }
 
         renderRelatedPosts(container, blog);
@@ -602,10 +655,13 @@ function renderParentLink(container, blog){
 
 // compact cover-image + title + summary card, followed by a row of episode
 // thumbnails, shown instead of a full write-up for any post that has
-// episodes nested under it
+// episodes nested under it -- the card itself is clickable and leads to
+// the full write-up (via forceFullContent), same post, same slug
 function renderCategoryOverview(container, blog, episodes){
     const overview = document.createElement('div');
     overview.className = 'category-overview';
+    overview.tabIndex = 0;
+    overview.setAttribute('role', 'button');
 
     const img = blog.querySelector('.blog-img');
     if(img){
@@ -625,8 +681,22 @@ function renderCategoryOverview(container, blog, episodes){
     summary.textContent = blog.querySelector('.summary') ? blog.querySelector('.summary').textContent : '';
     overview.appendChild(summary);
 
-    container.appendChild(overview);
+    const readMore = document.createElement('span');
+    readMore.className = 'category-overview-readmore';
+    readMore.textContent = 'Read the full write-up →';
+    overview.appendChild(readMore);
 
+    const go = () => openBlogBySlug(blog.dataset.slug, true);
+    overview.onclick = go;
+    overview.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
+
+    container.appendChild(overview);
+    renderEpisodeList(container, episodes);
+}
+
+// the "Episode" heading + row of episode cards -- shared by the compact
+// category view and the full-write-up view of the same post
+function renderEpisodeList(container, episodes){
     const section = document.createElement('div');
     section.className = 'blog-episodes';
 
