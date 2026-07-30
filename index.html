@@ -448,9 +448,12 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     let fleeTimer = null;
     let poofCtx = null;
 
-    // a quiet synthesized "poof" -- a short filtered noise burst with a
-    // quick pitch-down sweep, the same technique cartoon puff/pop sound
-    // effects use. Not a sample of any specific game's audio.
+    // a quiet synthesized "poof" -- a percussive pitch-dropping "thump"
+    // (the punchy attack a cartoon poof needs) layered under a short
+    // bandpass-filtered noise puff for the airy tail. Not a sample of
+    // any specific game's audio -- built from how cartoon poof/pop SFX
+    // are put together in general, since there's no way to reference the
+    // actual game audio here.
     function playPoofSound(){
         try{
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -458,7 +461,27 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             if(!poofCtx) poofCtx = new AudioContextClass();
             if(poofCtx.state === 'suspended') poofCtx.resume();
 
-            const duration = 0.22;
+            const now = poofCtx.currentTime;
+
+            // the "thump" -- a fast pitch-dropping tone that gives the
+            // sound its percussive pop, instead of just a soft noise fade
+            const thump = poofCtx.createOscillator();
+            thump.type = 'sine';
+            thump.frequency.setValueAtTime(340, now);
+            thump.frequency.exponentialRampToValueAtTime(55, now + 0.07);
+
+            const thumpGain = poofCtx.createGain();
+            thumpGain.gain.setValueAtTime(0.09, now);
+            thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+
+            thump.connect(thumpGain);
+            thumpGain.connect(poofCtx.destination);
+            thump.start(now);
+            thump.stop(now + 0.1);
+
+            // the "puff" -- a short bandpass-filtered noise burst for the
+            // airy texture that follows the thump
+            const duration = 0.16;
             const sampleRate = poofCtx.sampleRate;
             const buffer = poofCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
             const data = buffer.getChannelData(0);
@@ -470,23 +493,22 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             noise.buffer = buffer;
 
             const filter = poofCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1800, poofCtx.currentTime);
-            filter.frequency.exponentialRampToValueAtTime(220, poofCtx.currentTime + duration);
-            filter.Q.value = 0.7;
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1100, now);
+            filter.frequency.exponentialRampToValueAtTime(450, now + duration);
+            filter.Q.value = 0.9;
 
-            // kept quiet on purpose -- peak gain of .07
-            const gainNode = poofCtx.createGain();
-            gainNode.gain.setValueAtTime(0, poofCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.07, poofCtx.currentTime + 0.015);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, poofCtx.currentTime + duration);
+            const noiseGain = poofCtx.createGain();
+            noiseGain.gain.setValueAtTime(0, now);
+            noiseGain.gain.linearRampToValueAtTime(0.05, now + 0.012);
+            noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
             noise.connect(filter);
-            filter.connect(gainNode);
-            gainNode.connect(poofCtx.destination);
+            filter.connect(noiseGain);
+            noiseGain.connect(poofCtx.destination);
 
-            noise.start();
-            noise.stop(poofCtx.currentTime + duration);
+            noise.start(now);
+            noise.stop(now + duration);
         }catch(e){
             // sound is a nice-to-have here, never let it break the easter egg
         }
