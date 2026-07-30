@@ -448,12 +448,11 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     let fleeTimer = null;
     let poofCtx = null;
 
-    // a quiet synthesized "poof" -- a percussive pitch-dropping "thump"
-    // (the punchy attack a cartoon poof needs) layered under a short
-    // bandpass-filtered noise puff for the airy tail. Not a sample of
-    // any specific game's audio -- built from how cartoon poof/pop SFX
-    // are put together in general, since there's no way to reference the
-    // actual game audio here.
+    // a quiet synthesized "poof": a bubble-pop blip (rising pitch that
+    // cuts sharply, with a tiny click at the pop) layered with a small
+    // cluster of bright sparkle tones that fades in alongside the pop and
+    // then cuts off abruptly, like the object just vanished rather than
+    // the sound naturally decaying away.
     function playPoofSound(){
         try{
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -463,52 +462,79 @@ document.querySelectorAll('.carousel').forEach(carousel => {
 
             const now = poofCtx.currentTime;
 
-            // the "thump" -- a fast pitch-dropping tone that gives the
-            // sound its percussive pop, instead of just a soft noise fade
-            const thump = poofCtx.createOscillator();
-            thump.type = 'sine';
-            thump.frequency.setValueAtTime(340, now);
-            thump.frequency.exponentialRampToValueAtTime(55, now + 0.07);
+            // --- bubble pop: quick rising "boop" that cuts sharply ---
+            const pop = poofCtx.createOscillator();
+            pop.type = 'sine';
+            pop.frequency.setValueAtTime(500, now);
+            pop.frequency.exponentialRampToValueAtTime(1300, now + 0.05);
 
-            const thumpGain = poofCtx.createGain();
-            thumpGain.gain.setValueAtTime(0.09, now);
-            thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+            const popGain = poofCtx.createGain();
+            popGain.gain.setValueAtTime(0.0001, now);
+            popGain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+            popGain.gain.setValueAtTime(0.08, now + 0.045);
+            popGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
 
-            thump.connect(thumpGain);
-            thumpGain.connect(poofCtx.destination);
-            thump.start(now);
-            thump.stop(now + 0.1);
+            pop.connect(popGain);
+            popGain.connect(poofCtx.destination);
+            pop.start(now);
+            pop.stop(now + 0.06);
 
-            // the "puff" -- a short bandpass-filtered noise burst for the
-            // airy texture that follows the thump
-            const duration = 0.16;
-            const sampleRate = poofCtx.sampleRate;
-            const buffer = poofCtx.createBuffer(1, Math.floor(sampleRate * duration), sampleRate);
-            const data = buffer.getChannelData(0);
-            for(let i = 0; i < data.length; i++){
-                data[i] = Math.random() * 2 - 1;
+            // a tiny noise click right at the pop moment, for a bit of
+            // percussive "snap" instead of a pure, soft tone
+            const clickBuffer = poofCtx.createBuffer(1, Math.floor(poofCtx.sampleRate * 0.015), poofCtx.sampleRate);
+            const clickData = clickBuffer.getChannelData(0);
+            for(let i = 0; i < clickData.length; i++){
+                clickData[i] = Math.random() * 2 - 1;
             }
 
-            const noise = poofCtx.createBufferSource();
-            noise.buffer = buffer;
+            const click = poofCtx.createBufferSource();
+            click.buffer = clickBuffer;
 
-            const filter = poofCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(1100, now);
-            filter.frequency.exponentialRampToValueAtTime(450, now + duration);
-            filter.Q.value = 0.9;
+            const clickFilter = poofCtx.createBiquadFilter();
+            clickFilter.type = 'highpass';
+            clickFilter.frequency.value = 3000;
 
-            const noiseGain = poofCtx.createGain();
-            noiseGain.gain.setValueAtTime(0, now);
-            noiseGain.gain.linearRampToValueAtTime(0.05, now + 0.012);
-            noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            const clickGain = poofCtx.createGain();
+            clickGain.gain.setValueAtTime(0.05, now + 0.045);
+            clickGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
 
-            noise.connect(filter);
-            filter.connect(noiseGain);
-            noiseGain.connect(poofCtx.destination);
+            click.connect(clickFilter);
+            clickFilter.connect(clickGain);
+            clickGain.connect(poofCtx.destination);
+            click.start(now + 0.045);
+            click.stop(now + 0.06);
 
-            noise.start(now);
-            noise.stop(now + duration);
+            // --- sparkle: a handful of bright, slightly-detuned tones
+            // that fade in together (starting at the same moment as the
+            // pop), hold, then get cut off abruptly as a group -- an
+            // "it just vanished" ending rather than a natural fade-out ---
+            const sparkleLevel = poofCtx.createGain();
+            sparkleLevel.gain.value = 0.014;
+            sparkleLevel.connect(poofCtx.destination);
+
+            const sparkleMaster = poofCtx.createGain();
+            sparkleMaster.gain.setValueAtTime(0, now);
+            sparkleMaster.gain.linearRampToValueAtTime(1, now + 0.05);
+            sparkleMaster.gain.setValueAtTime(1, now + 0.18);
+            sparkleMaster.gain.linearRampToValueAtTime(0.0001, now + 0.186);
+            sparkleMaster.connect(sparkleLevel);
+
+            const sparkleFreqs = [2400, 3100, 3800, 4600, 5400];
+            sparkleFreqs.forEach((freq, i) => {
+                const osc = poofCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq * (0.97 + Math.random() * 0.06);
+
+                const noteStart = now + i * 0.014;
+                const noteGain = poofCtx.createGain();
+                noteGain.gain.setValueAtTime(0, noteStart);
+                noteGain.gain.linearRampToValueAtTime(1, noteStart + 0.01);
+
+                osc.connect(noteGain);
+                noteGain.connect(sparkleMaster);
+                osc.start(noteStart);
+                osc.stop(now + 0.19);
+            });
         }catch(e){
             // sound is a nice-to-have here, never let it break the easter egg
         }
