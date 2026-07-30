@@ -504,36 +504,53 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             click.start(now + 0.045);
             click.stop(now + 0.06);
 
-            // --- sparkle: a handful of bright, slightly-detuned tones
-            // that fade in together (starting at the same moment as the
-            // pop), hold, then get cut off abruptly as a group -- an
-            // "it just vanished" ending rather than a natural fade-out ---
-            const sparkleLevel = poofCtx.createGain();
-            sparkleLevel.gain.value = 0.014;
-            sparkleLevel.connect(poofCtx.destination);
-
+            // --- sparkle: a handful of short, individually-decaying
+            // bell-like notes -- glinting/twinkling, like light catching
+            // on something or a little treasure jingle, not a sustained
+            // ring. Starts a touch after the pop and keeps cascading in
+            // for a bit after the pop's cutoff, then the whole cluster is
+            // closed off cleanly. Kept clearly quieter than the pop, and
+            // pitched a good bit lower than the previous version so it
+            // doesn't read as a piercing ring.
+            const sparkleStart = now + 0.03;
             const sparkleMaster = poofCtx.createGain();
-            sparkleMaster.gain.setValueAtTime(0, now);
-            sparkleMaster.gain.linearRampToValueAtTime(1, now + 0.05);
-            sparkleMaster.gain.setValueAtTime(1, now + 0.18);
-            sparkleMaster.gain.linearRampToValueAtTime(0.0001, now + 0.186);
-            sparkleMaster.connect(sparkleLevel);
+            sparkleMaster.gain.setValueAtTime(1, now + 0.24);
+            sparkleMaster.gain.linearRampToValueAtTime(0.0001, now + 0.26);
+            sparkleMaster.connect(poofCtx.destination);
 
-            const sparkleFreqs = [2400, 3100, 3800, 4600, 5400];
+            const sparkleFreqs = [1568, 1865, 2093, 2489, 2793];
             sparkleFreqs.forEach((freq, i) => {
+                const noteStart = sparkleStart + i * 0.022;
+                const detune = 0.98 + Math.random() * 0.04;
+
+                // fundamental
                 const osc = poofCtx.createOscillator();
                 osc.type = 'sine';
-                osc.frequency.value = freq * (0.97 + Math.random() * 0.06);
+                osc.frequency.value = freq * detune;
 
-                const noteStart = now + i * 0.014;
+                // a quiet high partial for a touch of bell-like shimmer
+                const partial = poofCtx.createOscillator();
+                partial.type = 'sine';
+                partial.frequency.value = freq * detune * 2.4;
+                const partialGain = poofCtx.createGain();
+                partialGain.gain.value = 0.3;
+
+                // quick attack, then a proper decay -- this (not a flat
+                // sustain) is what makes it read as a twinkle, not a ring
                 const noteGain = poofCtx.createGain();
                 noteGain.gain.setValueAtTime(0, noteStart);
-                noteGain.gain.linearRampToValueAtTime(1, noteStart + 0.01);
+                noteGain.gain.linearRampToValueAtTime(0.018, noteStart + 0.008);
+                noteGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.11);
 
+                partial.connect(partialGain);
+                partialGain.connect(noteGain);
                 osc.connect(noteGain);
                 noteGain.connect(sparkleMaster);
+
                 osc.start(noteStart);
-                osc.stop(now + 0.19);
+                osc.stop(noteStart + 0.12);
+                partial.start(noteStart);
+                partial.stop(noteStart + 0.12);
             });
         }catch(e){
             // sound is a nice-to-have here, never let it break the easter egg
