@@ -537,14 +537,14 @@ function showPage(pageId){
 }
 
 // used both by clicking a preview card (openBlog above) and by clicking an
-// episode card or a "part of <series>" link generated in renderEpisodeNav
+// episode card, a "part of <series>" link, or a related-post card
 function openBlogBySlug(slug){
     const blog = document.querySelector('.blog-preview[data-slug="' + CSS.escape(slug) + '"]');
     if(!blog) return;
 
-    const content = blog.querySelector('.full-content').innerHTML;
     const page = document.getElementById('blogPost');
     const container = document.getElementById('blogContent');
+    const episodes = getEpisodes(slug);
 
     // fade out whichever page is currently showing (the blog list, or
     // another post if you're navigating from one episode to another)
@@ -555,8 +555,19 @@ function openBlogBySlug(slug){
     }
 
     setTimeout(()=>{
-        container.innerHTML = content;
-        renderEpisodeNav(container, blog);
+        container.innerHTML = '';
+
+        if(episodes.length > 0){
+            // this post has episodes nested under it -- treat it as a
+            // category page: a compact overview card up top, then the
+            // episode row right below it, instead of a long write-up
+            renderCategoryOverview(container, blog, episodes);
+        }else{
+            container.innerHTML = blog.querySelector('.full-content').innerHTML;
+            renderParentLink(container, blog);
+        }
+
+        renderRelatedPosts(container, blog);
         showPage('blogPost');
 
         // animate in
@@ -573,45 +584,139 @@ function openBlogBySlug(slug){
     },200);
 }
 
-// adds a "Part of <series>" link above episode posts, and an "Episodes"
-// list below series/overview posts that have episodes nested under them
-function renderEpisodeNav(container, blog){
-    const slug = blog.dataset.slug;
-    const parentSlug = blog.dataset.parent;
+function getEpisodes(slug){
+    const children = Array.from(document.querySelectorAll('.blog-preview[data-parent="' + CSS.escape(slug) + '"]'));
+    children.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
+    return children;
+}
 
-    if(parentSlug){
-        const parent = document.querySelector('.blog-preview[data-slug="' + CSS.escape(parentSlug) + '"]');
-        if(parent){
-            const link = document.createElement('p');
-            link.className = 'episode-parent-link';
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = parent.querySelector('h2') ? parent.querySelector('h2').textContent : parentSlug;
-            a.onclick = (e) => { e.preventDefault(); openBlogBySlug(parentSlug); };
-            link.append('Part of ', a);
-            container.prepend(link);
-        }
+// "Part of <series>" link shown above an episode post
+function renderParentLink(container, blog){
+    const parentSlug = blog.dataset.parent;
+    if(!parentSlug) return;
+
+    const parent = document.querySelector('.blog-preview[data-slug="' + CSS.escape(parentSlug) + '"]');
+    if(!parent) return;
+
+    const link = document.createElement('p');
+    link.className = 'episode-parent-link';
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = parent.querySelector('h2') ? parent.querySelector('h2').textContent : parentSlug;
+    a.onclick = (e) => { e.preventDefault(); openBlogBySlug(parentSlug); };
+    link.append('Part of ', a);
+    container.prepend(link);
+}
+
+// compact cover-image + title + summary card, followed by a row of episode
+// thumbnails, shown instead of a full write-up for any post that has
+// episodes nested under it
+function renderCategoryOverview(container, blog, episodes){
+    const overview = document.createElement('div');
+    overview.className = 'category-overview';
+
+    const img = blog.querySelector('.blog-img');
+    if(img){
+        const cardImg = document.createElement('img');
+        cardImg.src = img.getAttribute('src');
+        cardImg.alt = img.getAttribute('alt') || '';
+        cardImg.className = 'category-overview-img';
+        overview.appendChild(cardImg);
     }
 
-    const children = Array.from(document.querySelectorAll('.blog-preview[data-parent="' + CSS.escape(slug) + '"]'));
-    if(children.length === 0) return;
+    const title = document.createElement('h1');
+    title.textContent = blog.querySelector('h2') ? blog.querySelector('h2').textContent : '';
+    overview.appendChild(title);
 
-    children.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
+    const summary = document.createElement('p');
+    summary.className = 'category-overview-summary';
+    summary.textContent = blog.querySelector('.summary') ? blog.querySelector('.summary').textContent : '';
+    overview.appendChild(summary);
+
+    container.appendChild(overview);
 
     const section = document.createElement('div');
     section.className = 'blog-episodes';
 
     const heading = document.createElement('h2');
-    heading.textContent = 'Episodes';
+    heading.textContent = 'Episode';
     section.appendChild(heading);
 
     const list = document.createElement('div');
     list.className = 'episode-list';
 
-    children.forEach(child => {
-        const img = child.querySelector('.blog-img');
+    episodes.forEach((child, i) => {
+        const childImg = child.querySelector('.blog-img');
         const card = document.createElement('div');
         card.className = 'episode-card';
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+
+        if(childImg){
+            const cardImg = document.createElement('img');
+            cardImg.src = childImg.getAttribute('src');
+            cardImg.alt = childImg.getAttribute('alt') || '';
+            cardImg.className = 'episode-img';
+            card.appendChild(cardImg);
+        }
+
+        const badge = document.createElement('span');
+        badge.className = 'episode-number';
+        badge.textContent = '#' + (i + 1);
+        card.appendChild(badge);
+
+        const title2 = document.createElement('h3');
+        title2.textContent = child.querySelector('h2') ? child.querySelector('h2').textContent : '';
+        card.appendChild(title2);
+
+        const go = () => openBlogBySlug(child.dataset.slug);
+        card.onclick = go;
+        card.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
+
+        list.appendChild(card);
+    });
+
+    section.appendChild(list);
+    container.appendChild(section);
+}
+
+// "You might also like" -- other top-level posts sharing at least one tag
+// with the post being viewed, shown at the bottom of every post
+function renderRelatedPosts(container, blog){
+    const slug = blog.dataset.slug;
+    const parentSlug = blog.dataset.parent;
+    const tags = (blog.dataset.tags || '').split(' ').filter(Boolean);
+    if(tags.length === 0) return;
+
+    const scored = Array.from(document.querySelectorAll('.blog-preview'))
+        // only ever suggest standalone/category posts -- episodes are only
+        // ever reachable through their own category page
+        .filter(b => b.dataset.slug !== slug && b.dataset.slug !== parentSlug && !b.dataset.parent)
+        .map(b => {
+            const otherTags = (b.dataset.tags || '').split(' ').filter(Boolean);
+            const shared = otherTags.filter(t => tags.includes(t)).length;
+            return { post: b, shared };
+        })
+        .filter(c => c.shared > 0)
+        .sort((a, b) => b.shared - a.shared || new Date(b.post.dataset.date) - new Date(a.post.dataset.date))
+        .slice(0, 3);
+
+    if(scored.length === 0) return;
+
+    const section = document.createElement('div');
+    section.className = 'related-posts';
+
+    const heading = document.createElement('h2');
+    heading.textContent = 'You might also like';
+    section.appendChild(heading);
+
+    const list = document.createElement('div');
+    list.className = 'related-posts-list';
+
+    scored.forEach(({ post }) => {
+        const img = post.querySelector('.blog-img');
+        const card = document.createElement('div');
+        card.className = 'related-post-card';
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
 
@@ -619,19 +724,19 @@ function renderEpisodeNav(container, blog){
             const cardImg = document.createElement('img');
             cardImg.src = img.getAttribute('src');
             cardImg.alt = img.getAttribute('alt') || '';
-            cardImg.className = 'episode-img';
+            cardImg.className = 'related-post-img';
             card.appendChild(cardImg);
         }
 
         const title = document.createElement('h3');
-        title.textContent = child.querySelector('h2') ? child.querySelector('h2').textContent : '';
+        title.textContent = post.querySelector('h2') ? post.querySelector('h2').textContent : '';
         card.appendChild(title);
 
         const summary = document.createElement('p');
-        summary.textContent = child.querySelector('.summary') ? child.querySelector('.summary').textContent : '';
+        summary.textContent = post.querySelector('.summary') ? post.querySelector('.summary').textContent : '';
         card.appendChild(summary);
 
-        const go = () => openBlogBySlug(child.dataset.slug);
+        const go = () => openBlogBySlug(post.dataset.slug);
         card.onclick = go;
         card.onkeydown = (e) => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } };
 
