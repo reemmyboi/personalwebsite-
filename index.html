@@ -581,60 +581,64 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             click.start(now + 0.04);
             click.stop(now + 0.065);
 
-            // --- sparkle: a handful of short, individually-decaying
-            // bell-like notes (fundamental + quiet high partial each,
-            // spread across the stereo field) -- glinting/twinkling, like
-            // light catching on something or a little treasure jingle,
-            // not a sustained ring. Starts a touch after the pop and
-            // keeps cascading in for a bit after the pop's cutoff, then
-            // the whole cluster is closed off cleanly. Kept clearly
-            // quieter than the pop, and pitched low enough that it
-            // doesn't read as a piercing ring.
+            // --- sparkle: a rapid, irregular scatter of tiny bright noise
+            // crackles -- a cymbal's sizzle broken into audible individual
+            // pops, with the same crackling, unevenly-timed rhythm as pop
+            // rocks candy going off in your mouth. Each crackle is its own
+            // short burst of bandpassed noise (bright/metallic, not a
+            // tonal note), randomly pitched, panned, and timed, with gaps
+            // that widen toward the end so it naturally fizzles out
+            // instead of stopping on a beat. Starts a touch after the pop.
             const sparkleStart = now + 0.03;
+            const sparkleWindow = 0.2;
             const sparkleMaster = poofCtx.createGain();
-            sparkleMaster.gain.setValueAtTime(1, now + 0.24);
-            sparkleMaster.gain.exponentialRampToValueAtTime(0.0001, now + 0.27);
+            sparkleMaster.gain.value = 1;
             sparkleMaster.connect(master);
 
-            const sparkleFreqs = [1568, 1865, 2093, 2489, 2793];
-            sparkleFreqs.forEach((freq, i) => {
-                const noteStart = sparkleStart + i * 0.022;
-                const detune = 0.98 + Math.random() * 0.04;
-                const pan = -0.35 + (i / (sparkleFreqs.length - 1)) * 0.7;
+            const crackleCount = 18;
+            let crackleT = 0;
+            for(let i = 0; i < crackleCount; i++){
+                const progress = i / crackleCount;
+                const gap = 0.003 + Math.random() * 0.02 * (0.4 + progress);
+                crackleT += gap;
+                if(crackleT > sparkleWindow) break;
 
-                // fundamental
-                const osc = poofCtx.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.value = freq * detune;
+                const popTime = sparkleStart + crackleT;
+                const dur = 0.006 + Math.random() * 0.006;
 
-                // a quiet high partial for a touch of bell-like shimmer
-                const partial = poofCtx.createOscillator();
-                partial.type = 'sine';
-                partial.frequency.value = freq * detune * 2.4;
-                const partialGain = poofCtx.createGain();
-                partialGain.gain.value = 0.3;
+                const buf = poofCtx.createBuffer(1, Math.max(1, Math.floor(poofCtx.sampleRate * dur)), poofCtx.sampleRate);
+                const data = buf.getChannelData(0);
+                for(let j = 0; j < data.length; j++){
+                    data[j] = Math.random() * 2 - 1;
+                }
 
-                // quick attack, then a proper decay -- this (not a flat
-                // sustain) is what makes it read as a twinkle, not a ring
-                const noteGain = poofCtx.createGain();
-                noteGain.gain.setValueAtTime(0, noteStart);
-                noteGain.gain.linearRampToValueAtTime(0.018, noteStart + 0.008);
-                noteGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.11);
+                const crackle = poofCtx.createBufferSource();
+                crackle.buffer = buf;
 
-                const notePan = poofCtx.createStereoPanner();
-                notePan.pan.value = pan;
+                // bright, metallic, and randomized per-crackle -- this
+                // shimmering high-frequency band is what reads as
+                // "cymbal" rather than a generic click
+                const crackleFilter = poofCtx.createBiquadFilter();
+                crackleFilter.type = 'bandpass';
+                crackleFilter.frequency.value = 5000 + Math.random() * 4000;
+                crackleFilter.Q.value = 1.5 + Math.random() * 1.5;
 
-                partial.connect(partialGain);
-                partialGain.connect(noteGain);
-                osc.connect(noteGain);
-                noteGain.connect(notePan);
-                notePan.connect(sparkleMaster);
+                const crackleGain = poofCtx.createGain();
+                const peak = 0.02 + Math.random() * 0.02;
+                crackleGain.gain.setValueAtTime(peak, popTime);
+                crackleGain.gain.exponentialRampToValueAtTime(0.0001, popTime + dur);
 
-                osc.start(noteStart);
-                osc.stop(noteStart + 0.12);
-                partial.start(noteStart);
-                partial.stop(noteStart + 0.12);
-            });
+                const cracklePan = poofCtx.createStereoPanner();
+                cracklePan.pan.value = -0.5 + Math.random();
+
+                crackle.connect(crackleFilter);
+                crackleFilter.connect(crackleGain);
+                crackleGain.connect(cracklePan);
+                cracklePan.connect(sparkleMaster);
+
+                crackle.start(popTime);
+                crackle.stop(popTime + dur + 0.005);
+            }
         }catch(e){
             // sound is a nice-to-have here, never let it break the easter egg
         }
