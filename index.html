@@ -447,12 +447,37 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     let catches = 0;
     let fleeTimer = null;
     let poofCtx = null;
+    let poofReverbImpulse = null;
+
+    // a short synthesized reverb tail (exponentially-decaying stereo noise
+    // used as a convolution impulse response) -- built once and reused.
+    // This one thing does more to remove the "cheap/dry" quality than any
+    // amount of oscillator tweaking: real produced SFX almost never sit in
+    // total silence, they have a little bit of space around them.
+    function getPoofReverbImpulse(ctx){
+        if(!poofReverbImpulse){
+            const duration = 0.9, decay = 2.6;
+            const rate = ctx.sampleRate;
+            const length = Math.floor(rate * duration);
+            poofReverbImpulse = ctx.createBuffer(2, length, rate);
+            for(let ch = 0; ch < 2; ch++){
+                const data = poofReverbImpulse.getChannelData(ch);
+                for(let i = 0; i < length; i++){
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+                }
+            }
+        }
+        return poofReverbImpulse;
+    }
 
     // a quiet synthesized "poof": a bubble-pop blip (rising pitch that
     // cuts sharply, with a tiny click at the pop) layered with a small
     // cluster of bright sparkle tones that fades in alongside the pop and
     // then cuts off abruptly, like the object just vanished rather than
-    // the sound naturally decaying away.
+    // the sound naturally decaying away. Everything is layered with a
+    // couple of harmonics (not bare sine waves), spread across the stereo
+    // field, and passed through a touch of soft saturation + reverb so it
+    // reads as produced rather than a raw oscillator beep.
     function playPoofSound(){
         try{
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -462,26 +487,77 @@ document.querySelectorAll('.carousel').forEach(carousel => {
 
             const now = poofCtx.currentTime;
 
-            // --- bubble pop: quick rising "boop" that cuts sharply ---
-            const pop = poofCtx.createOscillator();
-            pop.type = 'sine';
-            pop.frequency.setValueAtTime(500, now);
-            pop.frequency.exponentialRampToValueAtTime(1300, now + 0.05);
+            // master bus -- everything routes through here for shared
+            // warmth (gentle tanh saturation) before splitting to a dry
+            // path and a low-level reverb send
+            const master = poofCtx.createGain();
+            master.gain.value = 1;
+
+            const saturation = poofCtx.createWaveShaper();
+            const curve = new Float32Array(256);
+            for(let i = 0; i < 256; i++){
+                const x = (i / 255) * 2 - 1;
+                curve[i] = Math.tanh(x * 1.4) / Math.tanh(1.4);
+            }
+            saturation.curve = curve;
+            saturation.oversample = '2x';
+
+            const reverbSend = poofCtx.createGain();
+            reverbSend.gain.value = 0.16; // subtle -- adds space, not a cave
+
+            const convolver = poofCtx.createConvolver();
+            convolver.buffer = getPoofReverbImpulse(poofCtx);
+
+            master.connect(saturation);
+            saturation.connect(poofCtx.destination);
+            saturation.connect(reverbSend);
+            reverbSend.connect(convolver);
+            convolver.connect(poofCtx.destination);
+
+            // --- bubble pop: layered fundamental + a triangle partial an
+            // octave up (for body/edge) + a brief low sub (for weight),
+            // quick rising pitch that cuts sharply ---
+            const popFund = poofCtx.createOscillator();
+            popFund.type = 'sine';
+            popFund.frequency.setValueAtTime(480, now);
+            popFund.frequency.exponentialRampToValueAtTime(1250, now + 0.05);
+
+            const popPartial = poofCtx.createOscillator();
+            popPartial.type = 'triangle';
+            popPartial.frequency.setValueAtTime(960, now);
+            popPartial.frequency.exponentialRampToValueAtTime(2500, now + 0.05);
+            const popPartialGain = poofCtx.createGain();
+            popPartialGain.gain.value = 0.22;
+
+            const popSub = poofCtx.createOscillator();
+            popSub.type = 'sine';
+            popSub.frequency.setValueAtTime(240, now);
+            popSub.frequency.exponentialRampToValueAtTime(320, now + 0.04);
+            const popSubGain = poofCtx.createGain();
+            popSubGain.gain.value = 0.35;
 
             const popGain = poofCtx.createGain();
             popGain.gain.setValueAtTime(0.0001, now);
-            popGain.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
-            popGain.gain.setValueAtTime(0.08, now + 0.045);
-            popGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+            popGain.gain.exponentialRampToValueAtTime(0.065, now + 0.01);
+            popGain.gain.setValueAtTime(0.065, now + 0.04);
+            popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
 
-            pop.connect(popGain);
-            popGain.connect(poofCtx.destination);
-            pop.start(now);
-            pop.stop(now + 0.06);
+            popFund.connect(popGain);
+            popPartial.connect(popPartialGain);
+            popPartialGain.connect(popGain);
+            popSub.connect(popSubGain);
+            popSubGain.connect(popGain);
+            popGain.connect(master);
 
-            // a tiny noise click right at the pop moment, for a bit of
-            // percussive "snap" instead of a pure, soft tone
-            const clickBuffer = poofCtx.createBuffer(1, Math.floor(poofCtx.sampleRate * 0.015), poofCtx.sampleRate);
+            popFund.start(now); popFund.stop(now + 0.07);
+            popPartial.start(now); popPartial.stop(now + 0.07);
+            popSub.start(now); popSub.stop(now + 0.06);
+
+            // a tiny shaped-noise click right at the pop moment for
+            // percussive "snap" -- bandpassed (a defined center + Q)
+            // instead of just highpassed, so it reads as a clean
+            // transient rather than broadband hiss
+            const clickBuffer = poofCtx.createBuffer(1, Math.floor(poofCtx.sampleRate * 0.02), poofCtx.sampleRate);
             const clickData = clickBuffer.getChannelData(0);
             for(let i = 0; i < clickData.length; i++){
                 clickData[i] = Math.random() * 2 - 1;
@@ -491,37 +567,40 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             click.buffer = clickBuffer;
 
             const clickFilter = poofCtx.createBiquadFilter();
-            clickFilter.type = 'highpass';
-            clickFilter.frequency.value = 3000;
+            clickFilter.type = 'bandpass';
+            clickFilter.frequency.value = 4200;
+            clickFilter.Q.value = 1.1;
 
             const clickGain = poofCtx.createGain();
-            clickGain.gain.setValueAtTime(0.05, now + 0.045);
-            clickGain.gain.linearRampToValueAtTime(0.0001, now + 0.06);
+            clickGain.gain.setValueAtTime(0.045, now + 0.04);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
 
             click.connect(clickFilter);
             clickFilter.connect(clickGain);
-            clickGain.connect(poofCtx.destination);
-            click.start(now + 0.045);
-            click.stop(now + 0.06);
+            clickGain.connect(master);
+            click.start(now + 0.04);
+            click.stop(now + 0.065);
 
             // --- sparkle: a handful of short, individually-decaying
-            // bell-like notes -- glinting/twinkling, like light catching
-            // on something or a little treasure jingle, not a sustained
-            // ring. Starts a touch after the pop and keeps cascading in
-            // for a bit after the pop's cutoff, then the whole cluster is
-            // closed off cleanly. Kept clearly quieter than the pop, and
-            // pitched a good bit lower than the previous version so it
+            // bell-like notes (fundamental + quiet high partial each,
+            // spread across the stereo field) -- glinting/twinkling, like
+            // light catching on something or a little treasure jingle,
+            // not a sustained ring. Starts a touch after the pop and
+            // keeps cascading in for a bit after the pop's cutoff, then
+            // the whole cluster is closed off cleanly. Kept clearly
+            // quieter than the pop, and pitched low enough that it
             // doesn't read as a piercing ring.
             const sparkleStart = now + 0.03;
             const sparkleMaster = poofCtx.createGain();
             sparkleMaster.gain.setValueAtTime(1, now + 0.24);
-            sparkleMaster.gain.linearRampToValueAtTime(0.0001, now + 0.26);
-            sparkleMaster.connect(poofCtx.destination);
+            sparkleMaster.gain.exponentialRampToValueAtTime(0.0001, now + 0.27);
+            sparkleMaster.connect(master);
 
             const sparkleFreqs = [1568, 1865, 2093, 2489, 2793];
             sparkleFreqs.forEach((freq, i) => {
                 const noteStart = sparkleStart + i * 0.022;
                 const detune = 0.98 + Math.random() * 0.04;
+                const pan = -0.35 + (i / (sparkleFreqs.length - 1)) * 0.7;
 
                 // fundamental
                 const osc = poofCtx.createOscillator();
@@ -542,10 +621,14 @@ document.querySelectorAll('.carousel').forEach(carousel => {
                 noteGain.gain.linearRampToValueAtTime(0.018, noteStart + 0.008);
                 noteGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.11);
 
+                const notePan = poofCtx.createStereoPanner();
+                notePan.pan.value = pan;
+
                 partial.connect(partialGain);
                 partialGain.connect(noteGain);
                 osc.connect(noteGain);
-                noteGain.connect(sparkleMaster);
+                noteGain.connect(notePan);
+                notePan.connect(sparkleMaster);
 
                 osc.start(noteStart);
                 osc.stop(noteStart + 0.12);
