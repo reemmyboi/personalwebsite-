@@ -595,16 +595,20 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             sparkleMaster.gain.value = 1;
             sparkleMaster.connect(master);
 
-            const crackleCount = 18;
+            const crackleCount = 26;
             let crackleT = 0;
             for(let i = 0; i < crackleCount; i++){
                 const progress = i / crackleCount;
-                const gap = 0.003 + Math.random() * 0.02 * (0.4 + progress);
+                // tighter, faster gaps than a soft candy crackle -- more of
+                // a rapid-fire burst, still widening a bit toward the end
+                const gap = 0.002 + Math.random() * 0.013 * (0.35 + progress);
                 crackleT += gap;
                 if(crackleT > sparkleWindow) break;
 
                 const popTime = sparkleStart + crackleT;
-                const dur = 0.006 + Math.random() * 0.006;
+                // shorter and crisper per-pop than before -- a sharp
+                // "tick" rather than a soft crackle
+                const dur = 0.004 + Math.random() * 0.004;
 
                 const buf = poofCtx.createBuffer(1, Math.max(1, Math.floor(poofCtx.sampleRate * dur)), poofCtx.sampleRate);
                 const data = buf.getChannelData(0);
@@ -615,16 +619,17 @@ document.querySelectorAll('.carousel').forEach(carousel => {
                 const crackle = poofCtx.createBufferSource();
                 crackle.buffer = buf;
 
-                // bright, metallic, and randomized per-crackle -- this
-                // shimmering high-frequency band is what reads as
-                // "cymbal" rather than a generic click
+                // brighter and higher-Q than before -- a sharper "snap"
+                // per pop, more firework-crackle than soft candy fizz
                 const crackleFilter = poofCtx.createBiquadFilter();
                 crackleFilter.type = 'bandpass';
-                crackleFilter.frequency.value = 5000 + Math.random() * 4000;
-                crackleFilter.Q.value = 1.5 + Math.random() * 1.5;
+                crackleFilter.frequency.value = 5500 + Math.random() * 4500;
+                crackleFilter.Q.value = 2 + Math.random() * 2;
 
                 const crackleGain = poofCtx.createGain();
-                const peak = 0.02 + Math.random() * 0.02;
+                // wider amplitude variance -- some pops noticeably louder
+                // than others, like an uneven shower of firework crackle
+                const peak = 0.016 + Math.random() * 0.028;
                 crackleGain.gain.setValueAtTime(peak, popTime);
                 crackleGain.gain.exponentialRampToValueAtTime(0.0001, popTime + dur);
 
