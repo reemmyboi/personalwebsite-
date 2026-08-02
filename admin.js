@@ -5,6 +5,7 @@ const API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`;
 const TOKEN_KEY = 'gh_pat';
 const ANCHOR_START = '<!-- ADMIN:BLOG_LIST_START -->';
 const ANCHOR_END = '<!-- ADMIN:BLOG_LIST_END -->';
+const SITE_BASE_URL = 'https://reemmyboi.github.io/personalwebsite-/';
 
 // ===== UTF-8-SAFE BASE64 =====
 // Plain btoa/atob operate on UTF-16 code units, not bytes, and break on
@@ -205,6 +206,163 @@ function buildBlogPreviewHtml(post){
             </div>`;
 }
 
+// ===== STANDALONE PER-POST PAGES (for search engine indexing) =====
+// The SPA at index.html holds every post's content in one document behind
+// JS-driven view state, which search engines have no reliable, unique URL
+// to point at per post. These standalone pages give each post (and each
+// episode) its own real, crawlable URL at blog/<slug>/index.html, with the
+// actual content sitting directly in the page rather than behind JS state.
+function toRootRelative(path){
+    return '../../' + path;
+}
+
+function buildStandalonePostHtml(post, allPosts){
+    const episodes = allPosts
+        .filter(p => p.parentSlug === post.slug)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const parent = post.parentSlug ? allPosts.find(p => p.slug === post.parentSlug) : null;
+    const headerImgPath = post.headerImgPath || post.previewImgPath;
+    const description = escapeAttr((post.summary || post.title).slice(0, 300));
+
+    let bodySection;
+    if(episodes.length > 0){
+        // category page: compact overview + links to each episode's own
+        // standalone page, mirroring the SPA's category view
+        const episodeLinks = episodes.map((ep, i) => `
+                <a class="episode-card" href="../${escapeAttr(ep.slug)}/">
+                    <img src="${escapeAttr(toRootRelative(ep.previewImgPath))}" class="episode-img" alt="${escapeAttr(ep.title)}">
+                    <span class="episode-number">#${i + 1}</span>
+                    <h3>${escapeHtml(ep.title)}</h3>
+                </a>`).join('');
+        bodySection = `
+            <div class="category-overview">
+                <img src="${escapeAttr(toRootRelative(post.previewImgPath))}" class="category-overview-img" alt="${escapeAttr(post.title)}">
+                <h1>${escapeHtml(post.title)}</h1>
+                <p class="category-overview-summary">${escapeHtml(post.summary)}</p>
+            </div>
+            <div class="blog-episodes">
+                <h2>Episode</h2>
+                <div class="episode-list">${episodeLinks}
+                </div>
+            </div>`;
+    }else{
+        const parentLink = parent
+            ? `<p class="episode-parent-link">Part of <a href="../${escapeAttr(parent.slug)}/">${escapeHtml(parent.title)}</a></p>`
+            : '';
+        // inline images in the body are always stored as "photos/..." (see
+        // uploadImage()) -- rewrite them to be root-relative from two
+        // directories deep, same as the fixed header image path below
+        const rootRelativeBody = post.bodyHtml.replace(/src="photos\//g, 'src="../../photos/');
+        bodySection = `
+            ${parentLink}
+            <h1>${escapeHtml(post.title)}</h1>
+            <img src="${escapeAttr(toRootRelative(headerImgPath))}" class="blog-img-full" alt="${escapeAttr(post.title)}">
+            ${rootRelativeBody}`;
+    }
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(post.title)} — REEMMY</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="${SITE_BASE_URL}blog/${escapeAttr(post.slug)}/">
+<meta property="og:title" content="${escapeAttr(post.title)}">
+<meta property="og:description" content="${description}">
+<meta property="og:image" content="${SITE_BASE_URL}${escapeAttr(post.previewImgPath)}">
+<meta property="og:type" content="article">
+<link rel="icon" type="image/png" sizes="32x32" href="../../photos/favicon-32x32.png">
+<link rel="stylesheet" href="../../styles.css">
+</head>
+<body>
+<nav>
+    <a href="../../index.html">🌳 Media Tree</a>
+    <a href="../../index.html">📝 About Me</a>
+    <a href="../../index.html">📰 Blogs</a>
+</nav>
+<section class="page active">
+    <div class="card">
+        <a href="../../index.html" class="back-btn">⬅ Back to site</a>
+        <div id="blogContent">${bodySection}
+        </div>
+    </div>
+</section>
+</body>
+</html>
+`;
+}
+
+// fetches the current sha for a path if it exists, or undefined if it's a
+// new file -- GitHub's Contents API needs the sha to overwrite, and errors
+// if you send one for a file that doesn't exist yet. A plain fetch (not
+// apiRequest) so a 404 can be told apart from a real problem -- treating
+// every failure as "doesn't exist yet" would silently swallow auth/rate
+// limit errors instead of surfacing them.
+async function getExistingSha(path){
+    const token = getToken();
+    if(!token){
+        handleLogout();
+        throw new Error('Not logged in.');
+    }
+    const res = await fetch(`${API}/contents/${path}?ref=main`, { headers: authHeaders(token) });
+    if(res.status === 404) return undefined;
+    if(!res.ok) throw await apiError(res);
+    const json = await res.json();
+    return json.sha;
+}
+
+async function uploadStandalonePostPage(post, allPosts){
+    const path = `blog/${post.slug}/index.html`;
+    const html = buildStandalonePostHtml(post, allPosts);
+    const sha = await getExistingSha(path);
+    await apiRequest(`/contents/${path}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: `Update standalone page: ${post.title}`,
+            content: utf8ToBase64(html),
+            sha,
+            branch: 'main'
+        })
+    });
+}
+
+async function deleteStandalonePostPage(slug, title){
+    const path = `blog/${slug}/index.html`;
+    const sha = await getExistingSha(path);
+    if(!sha) return; // never had one (e.g. published before this feature existed)
+    await apiRequest(`/contents/${path}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: `Delete standalone page: ${title}`,
+            sha,
+            branch: 'main'
+        })
+    });
+}
+
+function buildSitemapXml(posts){
+    const urls = [SITE_BASE_URL, ...posts.map(p => `${SITE_BASE_URL}blog/${p.slug}/`)];
+    const entries = urls.map(u => `  <url><loc>${u}</loc></url>`).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`;
+}
+
+async function uploadSitemap(posts){
+    const sha = await getExistingSha('sitemap.xml');
+    await apiRequest('/contents/sitemap.xml', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: 'Update sitemap.xml',
+            content: utf8ToBase64(buildSitemapXml(posts)),
+            sha,
+            branch: 'main'
+        })
+    });
+}
+
 // ===== STRING-LEVEL SPLICING (never a full DOMParser round-trip on write --
 // that can silently reformat unrelated markup and drops the doctype) =====
 function getAnchorBounds(html){
@@ -315,6 +473,7 @@ let currentTags = [];
 let editingSlug = null; // null while creating a new post
 let existingPreviewImgPath = null; // kept when editing and no new file was picked
 let existingHeaderImgPath = null; // '' means "reuse the preview image", same as never having set one
+let existingParentSlug = ''; // the post's series membership *before* this edit -- needed to tell if it changed
 let allPosts = []; // refreshed by refreshPostList(); used to populate the series/parent dropdown without a refetch
 
 // populates the "Belongs to series" dropdown with every top-level post
@@ -505,6 +664,24 @@ async function handleDelete(slug, title){
         await putIndexHtml(newHtml, sha, `Delete blog post: ${title}`);
         showToast('Post deleted.');
         refreshPostList();
+
+        // best-effort cleanup of the standalone SEO page + sitemap entry --
+        // the post itself is already gone either way, so a failure here
+        // just means a stale (but harmless, unlinked) page lingers
+        try{
+            await deleteStandalonePostPage(slug, title);
+            const remainingPosts = parsePosts(newHtml);
+            // if the deleted post was an episode, its series page still
+            // links to it and needs to be regenerated without that entry
+            const deletedPost = allPosts.find(p => p.slug === slug);
+            if(deletedPost && deletedPost.parentSlug){
+                const parentPost = remainingPosts.find(p => p.slug === deletedPost.parentSlug);
+                if(parentPost) await uploadStandalonePostPage(parentPost, remainingPosts);
+            }
+            await uploadSitemap(remainingPosts);
+        }catch(cleanupErr){
+            console.error('Standalone page cleanup failed:', cleanupErr);
+        }
     }catch(e){
         showToast('Delete failed: ' + e.message, true);
     }
@@ -515,6 +692,7 @@ function showNewPostForm(){
     editingSlug = null;
     existingPreviewImgPath = null;
     existingHeaderImgPath = null;
+    existingParentSlug = '';
     currentTags = [];
 
     document.getElementById('fieldTitle').value = '';
@@ -538,6 +716,7 @@ function showEditPostForm(post){
     editingSlug = post.slug;
     existingPreviewImgPath = post.previewImgPath;
     existingHeaderImgPath = post.headerImgPath;
+    existingParentSlug = post.parentSlug || '';
     currentTags = post.tags.slice();
 
     document.getElementById('fieldTitle').value = post.title;
@@ -676,7 +855,37 @@ async function handlePublish(){
 
         await putIndexHtml(newHtml, sha, editingSlug ? `Edit blog post: ${title}` : `Add blog post: ${title}`);
 
-        showToast('Published! GitHub Pages will redeploy in about a minute.');
+        // give the post its own crawlable URL for search engines, and keep
+        // the sitemap in sync -- best-effort: the post itself is already
+        // live either way, so a failure here shouldn't block the publish
+        let seoWarning = '';
+        try{
+            setFormStatus('Publishing standalone page...');
+            const allPostsNow = parsePosts(newHtml);
+            await uploadStandalonePostPage(post, allPostsNow);
+            // if this post belongs to a series, that series's own standalone
+            // page needs to be regenerated too -- its episode list is only
+            // as current as the last time IT was published, so without this
+            // a series page would keep listing a stale set of episodes
+            // every time a new one is added
+            if(parentSlug){
+                const parentPost = allPostsNow.find(p => p.slug === parentSlug);
+                if(parentPost) await uploadStandalonePostPage(parentPost, allPostsNow);
+            }
+            // if this post used to belong to a *different* series (or used
+            // to be an episode and now isn't), that OLD series's page still
+            // links to it and needs to be regenerated to drop the stale entry
+            if(existingParentSlug && existingParentSlug !== parentSlug){
+                const oldParentPost = allPostsNow.find(p => p.slug === existingParentSlug);
+                if(oldParentPost) await uploadStandalonePostPage(oldParentPost, allPostsNow);
+            }
+            await uploadSitemap(allPostsNow);
+        }catch(seoErr){
+            console.error('Standalone page publish failed:', seoErr);
+            seoWarning = ' (its SEO page failed to update: ' + seoErr.message + ')';
+        }
+
+        showToast('Published! GitHub Pages will redeploy in about a minute.' + seoWarning, !!seoWarning);
         showListView();
     }catch(e){
         if(e.message === 'CONFLICT'){

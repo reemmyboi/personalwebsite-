@@ -769,6 +769,7 @@ function openBlogBySlug(slug, forceFullContent){
             }
         }
 
+        renderPermalink(container, blog);
         renderRelatedPosts(container, blog);
         showPage('blogPost');
 
@@ -790,6 +791,17 @@ function getEpisodes(slug){
     const children = Array.from(document.querySelectorAll('.blog-preview[data-parent="' + CSS.escape(slug) + '"]'));
     children.sort((a, b) => new Date(a.dataset.date) - new Date(b.dataset.date));
     return children;
+}
+
+// a small link to this post's own standalone page (blog/<slug>/) -- gives
+// people a real shareable URL, and gives search engines an internal link
+// to the crawlable version of this post instead of just the SPA state
+function renderPermalink(container, blog){
+    const link = document.createElement('a');
+    link.className = 'permalink';
+    link.href = 'blog/' + encodeURIComponent(blog.dataset.slug) + '/';
+    link.textContent = '🔗 Permalink';
+    container.appendChild(link);
 }
 
 // "Part of <series>" link shown above an episode post
@@ -904,20 +916,29 @@ function renderEpisodeList(container, episodes){
 function renderRelatedPosts(container, blog){
     const slug = blog.dataset.slug;
     const parentSlug = blog.dataset.parent;
+    const ownEpisodeSlugs = getEpisodes(slug).map(e => e.dataset.slug);
     const tags = (blog.dataset.tags || '').split(' ').filter(Boolean);
-    if(tags.length === 0) return;
 
     const scored = Array.from(document.querySelectorAll('.blog-preview'))
-        // only ever suggest standalone/category posts -- episodes are only
-        // ever reachable through their own category page
-        .filter(b => b.dataset.slug !== slug && b.dataset.slug !== parentSlug && !b.dataset.parent)
+        .filter(b => {
+            const bSlug = b.dataset.slug;
+            if(bSlug === slug) return false; // never itself
+            if(bSlug === parentSlug) return false; // already shown via the "Part of" link
+            if(ownEpisodeSlugs.includes(bSlug)) return false; // already shown in this post's own Episode row
+            return true;
+        })
         .map(b => {
             const otherTags = (b.dataset.tags || '').split(' ').filter(Boolean);
             const shared = otherTags.filter(t => tags.includes(t)).length;
-            return { post: b, shared };
+            // sibling episodes (same series) are the strongest possible
+            // "similar blog" -- weighted well above any amount of tag
+            // overlap, so they always surface first when they exist
+            const sameParent = !!parentSlug && b.dataset.parent === parentSlug;
+            const score = shared + (sameParent ? 10 : 0);
+            return { post: b, score };
         })
-        .filter(c => c.shared > 0)
-        .sort((a, b) => b.shared - a.shared || new Date(b.post.dataset.date) - new Date(a.post.dataset.date))
+        .filter(c => c.score > 0)
+        .sort((a, b) => b.score - a.score || new Date(b.post.dataset.date) - new Date(a.post.dataset.date))
         .slice(0, 3);
 
     if(scored.length === 0) return;
@@ -926,7 +947,7 @@ function renderRelatedPosts(container, blog){
     section.className = 'related-posts';
 
     const heading = document.createElement('h2');
-    heading.textContent = 'You might also like';
+    heading.textContent = 'Similar Blogs';
     section.appendChild(heading);
 
     const list = document.createElement('div');
@@ -980,14 +1001,10 @@ function filterBlogs(category){
 function applyBlogVisibility(){
     const input = document.getElementById('searchBar').value.toLowerCase();
 
+    // episodes now show on the main list alongside everything else (they
+    // used to be hidden, only reachable through their series page) -- they
+    // go through the exact same search/tag matching as any other post
     document.querySelectorAll('.blog-preview').forEach(blog=>{
-        // episodes only ever show nested under their series post, never in
-        // the main list
-        if(blog.dataset.parent){
-            blog.style.display = 'none';
-            return;
-        }
-
         const text = blog.innerText.toLowerCase();
         const matchesSearch = text.includes(input);
         const tags = blog.dataset.tags.split(' ');
@@ -1029,7 +1046,28 @@ function renderTagButtons(){
     });
 }
 
+// episodes now show on the main list alongside everything else -- this
+// adds a small "Part of <series>" badge onto each episode's own preview
+// card so it still reads clearly as part of a series while browsing,
+// instead of looking like an unrelated standalone post
+function renderEpisodeBadges(){
+    document.querySelectorAll('.blog-preview[data-parent]').forEach(blog=>{
+        if(blog.querySelector('.preview-parent-badge')) return; // don't double up on repeat calls
+        const parentSlug = blog.dataset.parent;
+        const parent = document.querySelector('.blog-preview[data-slug="' + CSS.escape(parentSlug) + '"]');
+        if(!parent) return;
+        const badge = document.createElement('p');
+        badge.className = 'preview-parent-badge';
+        badge.textContent = '↪ Part of ' + (parent.querySelector('h2') ? parent.querySelector('h2').textContent : parentSlug);
+        const tagsEl = blog.querySelector('.tags');
+        if(tagsEl) tagsEl.insertAdjacentElement('afterend', badge);
+        else blog.appendChild(badge);
+    });
+}
+
 renderTagButtons();
+renderEpisodeBadges();
+sortBlogs('new'); // most-recent-first by default, now including episodes
 applyBlogVisibility();
 </script>
 </body>
