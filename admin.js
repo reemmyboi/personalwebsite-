@@ -293,12 +293,12 @@ function buildStandalonePostHtml(post, allPosts){
                 <h1>${escapeHtml(post.title)}</h1>
                 <p class="category-overview-summary">${escapeHtml(post.summary)}</p>
             </div>
+            ${rootRelativeBody}
             <div class="blog-episodes">
                 <h2>Episode</h2>
                 <div class="episode-list">${episodeLinks}
                 </div>
-            </div>
-            ${rootRelativeBody}`;
+            </div>`;
     }else{
         const parentLink = parent
             ? `<p class="episode-parent-link">Part of <a href="../${escapeAttr(parent.slug)}/">${escapeHtml(parent.title)}</a></p>`
@@ -334,12 +334,12 @@ function buildStandalonePostHtml(post, allPosts){
 <body>
 <nav>
     <a href="../../index.html">🌳 Media Tree</a>
-    <a href="../../index.html">📝 About Me</a>
-    <a href="../../index.html">📰 Blogs</a>
+    <a href="../../index.html#about">📝 About Me</a>
+    <a href="../../index.html#blogs">📰 Blogs</a>
 </nav>
 <section class="page active">
     <div class="card">
-        <a href="../../index.html" class="back-btn">⬅ Back to site</a>
+        <a href="../../index.html#blogs" class="back-btn">⬅ Back to site</a>
         <div id="blogContent">${bodySection}
         </div>
     </div>

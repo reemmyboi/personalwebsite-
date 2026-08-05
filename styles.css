@@ -414,7 +414,7 @@ h1{
 }
 
 /* compact cover-image + title + summary card shown at the top of a
-   category/series page instead of a full write-up */
+   category/series page, above its own full write-up */
 .category-overview{
     text-align:center;
     border:1px solid rgba(255,255,255,.08);
@@ -422,15 +422,6 @@ h1{
     padding:20px;
     background:rgba(30,41,59,.35);
     margin-bottom:1.5rem;
-    cursor:pointer;
-    transition:.25s;
-}
-
-.category-overview:hover,
-.category-overview:focus-visible{
-    transform:translateY(-4px);
-    box-shadow:0 10px 25px rgba(0,0,0,.6);
-    outline:none;
 }
 
 .category-overview-img{
@@ -451,14 +442,6 @@ h1{
     color:#94a3b8;
     font-size:1rem;
     line-height:1.6;
-}
-
-.category-overview-readmore{
-    display:inline-block;
-    margin-top:12px;
-    color:#60a5fa;
-    font-size:.9rem;
-    font-weight:600;
 }
 
 /* "Episode" row shown below a category/series page's overview card */

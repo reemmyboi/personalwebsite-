@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>REEMMY</title>
+<script>
+// GitHub Pages serves this file for the bare folder URL too, so anyone who
+// lands here via an old link/bookmark with "index.html" still typed on the
+// end gets it silently tidied out of the address bar -- no redirect, no
+// reload, nothing for a search engine or share link to trip over.
+if(location.pathname.endsWith('/index.html')){
+    const cleanPath = location.pathname.slice(0, -'index.html'.length) + location.search + location.hash;
+    history.replaceState(null, '', cleanPath);
+}
+</script>
 
 <link rel="apple-touch-icon" sizes="180x180" href="photos/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="photos/favicon-32x32.png">
@@ -739,8 +749,13 @@ function showPage(pageId){
     window.scrollTo({ top: 0, behavior: "instant" });
 }
 
-    // scroll reset
- 
+// jump straight to a section when arriving via a link like
+// "index.html#blogs" -- used by the standalone blog pages' nav and
+// "Back to site" button so leaving a post returns you to the blog list
+// instead of always landing back on the default Media Tree section
+if(location.hash === '#blogs' || location.hash === '#about'){
+    showPage(location.hash.slice(1));
+}
 </script>
 <script>
 // SEARCH + FILTER (combined so neither one clobbers the other's state)
