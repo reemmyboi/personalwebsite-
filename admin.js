@@ -836,6 +836,33 @@ function renderTagChips(){
         };
         wrap.insertBefore(chip, input);
     });
+    renderTagSuggestions();
+}
+
+// every tag already used anywhere on the site, minus ones already added to
+// this post -- lets a new/rare tag stay easy to spell consistently instead
+// of retyping it (and risking a near-duplicate like "tv" vs "television")
+function renderTagSuggestions(){
+    const container = document.getElementById('tagSuggestions');
+    if(!container) return;
+    const allTags = new Set();
+    allPosts.forEach(post => post.tags.forEach(t => allTags.add(t)));
+    currentTags.forEach(t => allTags.delete(t));
+
+    container.innerHTML = '';
+    if(allTags.size === 0) return;
+
+    Array.from(allTags).sort().forEach(tag => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'admin-tag-suggestion-chip';
+        chip.textContent = '+ ' + tag;
+        chip.onclick = () => {
+            currentTags.push(tag);
+            renderTagChips();
+        };
+        container.appendChild(chip);
+    });
 }
 
 function handleImageChange(e, kind){

@@ -315,13 +315,27 @@ oninput="searchBlogs()"
 >
 
         <!-- CONTROLS -->
-        <div class="blog-controls">
-            <button onclick="sortBlogs('new')">Newest</button>
-            <button onclick="sortBlogs('old')">Oldest</button>
+        <div class="blog-toolbar">
+            <button type="button" class="blog-filter-trigger" id="blogFilterTrigger" aria-expanded="false" aria-controls="blogFilterPanel" onclick="toggleFilterMenu()">
+                <span class="blog-filter-trigger-icon">⇅</span>
+                <span id="blogFilterState">Newest &middot; All tags</span>
+                <span class="blog-filter-trigger-caret">▾</span>
+            </button>
 
-            <button onclick="filterBlogs('all')">All</button>
-            <!-- generated at load by renderTagButtons(), one button per tag actually in use -->
-            <div id="tagButtons"></div>
+            <div class="blog-filter-panel" id="blogFilterPanel">
+                <div class="blog-filter-group">
+                    <span class="blog-filter-group-label">Sort by</span>
+                    <div class="blog-filter-pills">
+                        <button type="button" class="blog-filter-pill" data-sort="new" onclick="sortBlogs('new')">Newest</button>
+                        <button type="button" class="blog-filter-pill" data-sort="old" onclick="sortBlogs('old')">Oldest</button>
+                    </div>
+                </div>
+                <div class="blog-filter-group">
+                    <span class="blog-filter-group-label">Filter by tag</span>
+                    <!-- generated at load by renderTagButtons(): an "All" pill plus one per tag actually in use -->
+                    <div class="blog-filter-pills" id="tagButtons"></div>
+                </div>
+            </div>
         </div>
 
         <!-- BLOG LIST -->
@@ -731,6 +745,7 @@ function showPage(pageId){
 <script>
 // SEARCH + FILTER (combined so neither one clobbers the other's state)
 let activeCategory = 'all';
+let activeSort = 'new';
 
 function searchBlogs(){
     applyBlogVisibility();
@@ -738,7 +753,36 @@ function searchBlogs(){
 
 function filterBlogs(category){
     activeCategory = category;
+    document.querySelectorAll('#tagButtons .blog-filter-pill').forEach(pill=>{
+        pill.classList.toggle('active', pill.dataset.tag === category);
+    });
+    updateFilterTriggerState();
     applyBlogVisibility();
+}
+
+// SORT + FILTER DROPDOWN
+function toggleFilterMenu(force){
+    const panel = document.getElementById('blogFilterPanel');
+    const trigger = document.getElementById('blogFilterTrigger');
+    const open = typeof force === 'boolean' ? force : !panel.classList.contains('open');
+    panel.classList.toggle('open', open);
+    trigger.setAttribute('aria-expanded', String(open));
+}
+
+document.addEventListener('click', (e)=>{
+    const toolbar = document.querySelector('.blog-toolbar');
+    if(toolbar && !toolbar.contains(e.target)) toggleFilterMenu(false);
+});
+
+document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') toggleFilterMenu(false);
+});
+
+function updateFilterTriggerState(){
+    const sortLabel = activeSort === 'new' ? 'Newest' : 'Oldest';
+    const activePill = document.querySelector('#tagButtons .blog-filter-pill.active');
+    const tagLabel = activeCategory === 'all' ? 'All tags' : (activePill ? activePill.textContent : activeCategory);
+    document.getElementById('blogFilterState').textContent = `${sortLabel} · ${tagLabel}`;
 }
 
 function applyBlogVisibility(){
@@ -758,6 +802,7 @@ function applyBlogVisibility(){
 
 // SORT
 function sortBlogs(type){
+    activeSort = type;
     const container = document.getElementById('blogList');
     const blogs = Array.from(container.children);
 
@@ -768,9 +813,14 @@ function sortBlogs(type){
     });
 
     blogs.forEach(blog => container.appendChild(blog));
+
+    document.querySelectorAll('.blog-filter-pills [data-sort]').forEach(pill=>{
+        pill.classList.toggle('active', pill.dataset.sort === type);
+    });
+    updateFilterTriggerState();
 }
 
-// TAG BUTTONS (generated from whatever tags are actually in use, so
+// TAG PILLS (generated from whatever tags are actually in use, so
 // admin.html never has to touch this file's button markup when a new
 // tag shows up on a post)
 function renderTagButtons(){
@@ -781,11 +831,23 @@ function renderTagButtons(){
 
     const container = document.getElementById('tagButtons');
     container.innerHTML = '';
+
+    const allPill = document.createElement('button');
+    allPill.type = 'button';
+    allPill.className = 'blog-filter-pill active';
+    allPill.dataset.tag = 'all';
+    allPill.textContent = 'All';
+    allPill.onclick = () => filterBlogs('all');
+    container.appendChild(allPill);
+
     Array.from(tags).sort().forEach(tag=>{
-        const btn = document.createElement('button');
-        btn.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
-        btn.onclick = () => filterBlogs(tag);
-        container.appendChild(btn);
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'blog-filter-pill';
+        pill.dataset.tag = tag;
+        pill.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
+        pill.onclick = () => filterBlogs(tag);
+        container.appendChild(pill);
     });
 }
 

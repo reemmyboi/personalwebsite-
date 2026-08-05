@@ -73,6 +73,9 @@
                     <input type="text" id="fieldTagEntry" placeholder="Type a tag, press Enter" onkeydown="handleTagKeydown(event)">
                 </div>
                 <p class="admin-hint">Press Enter or comma after each tag. Multi-word tags are hyphenated automatically.</p>
+                <!-- populated by renderTagSuggestions(): every tag already used on the site,
+                     minus ones already added above -- click one to reuse it instead of retyping -->
+                <div class="admin-tag-suggestions" id="tagSuggestions"></div>
 
                 <label for="fieldParent">Belongs to series <span class="admin-hint">(nests this post as an episode under another post)</span></label>
                 <select id="fieldParent" class="admin-select">

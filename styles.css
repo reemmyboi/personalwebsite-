@@ -20,7 +20,7 @@ nav{
     flex-wrap:wrap;
 }
 
-nav button{
+nav button, nav a{
     border:none;
     padding:12px 22px;
     border-radius:12px;
@@ -28,13 +28,15 @@ nav button{
     font-weight:600;
     background:rgba(30,41,59,.6);
     color:#e5e7eb;
+    text-decoration:none;
+    display:inline-block;
     -webkit-backdrop-filter:blur(10px);
     backdrop-filter:blur(10px);
     box-shadow:0 5px 15px rgba(0,0,0,.5);
     transition:.25s;
 }
 
-nav button:hover{
+nav button:hover, nav a:hover{
     transform:translateY(-2px);
     background:#1e293b;
 }
@@ -51,6 +53,12 @@ nav button:hover{
 
 .page.active{
     display:block;
+}
+
+/* the blog list needs real room for a multi-column grid -- every other
+   page stays at the narrower default width above */
+#blogs.page{
+    max-width:1400px;
 }
 
 /* Cards */
@@ -282,11 +290,18 @@ h1{
     text-decoration:none;
 }
 
+/* dense grid so many more previews fit on screen at once -- each card
+   shrinks to fit rather than the list staying a single centered column */
+#blogList{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:18px;
+}
+
 .blog-preview{
     background:linear-gradient(145deg,#020617,#020617,#0f172a);
     border-radius:16px;
-    padding:18px;
-    margin-bottom:20px;
+    padding:14px;
     cursor:pointer;
     transition:all .35s ease;
     overflow:hidden;
@@ -295,12 +310,12 @@ h1{
     opacity:0;
     transform:translateY(20px);
     animation:fadeUp .5s forwards;
-    max-width:650px;
-    margin:0 auto 25px auto;
 }
 
-.blog-preview:nth-child(2){ animation-delay:.1s }
-.blog-preview:nth-child(3){ animation-delay:.2s }
+.blog-preview:nth-child(2){ animation-delay:.06s }
+.blog-preview:nth-child(3){ animation-delay:.12s }
+.blog-preview:nth-child(4){ animation-delay:.18s }
+.blog-preview:nth-child(5){ animation-delay:.24s }
 
 @keyframes fadeUp{
     to{
@@ -308,8 +323,15 @@ h1{
         transform:translateY(0);
     }
 }
-    .blog-preview h2{
-    margin-top:10px;
+.blog-preview h2{
+    margin-top:8px;
+    font-size:1.05rem;
+    line-height:1.3;
+    /* keep card heights uniform in the grid regardless of title length */
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
 }
 
 .blog-preview::after{
@@ -588,18 +610,125 @@ h1{
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
 }
 
-.blog-controls{
+/* SORT & FILTER DROPDOWN */
+.blog-toolbar{
+    position:relative;
     display:flex;
-    gap:10px;
-    flex-wrap:wrap;
     justify-content:center;
-    margin-bottom:20px;
+    margin-bottom:25px;
 }
 
-/* lets the JS-generated tag buttons inside participate in .blog-controls'
-   flex layout as if they were direct children */
-#tagButtons{
-    display:contents;
+.blog-filter-trigger{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:.95rem;
+    background:rgba(30,41,59,.6);
+    color:#e5e7eb;
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    box-shadow:0 5px 15px rgba(0,0,0,.5);
+    transition:.25s;
+}
+
+.blog-filter-trigger:hover{
+    background:#1e293b;
+    transform:translateY(-2px);
+}
+
+.blog-filter-trigger-icon{
+    color:#60a5fa;
+}
+
+#blogFilterState{
+    color:#94a3b8;
+    font-weight:400;
+    font-size:.85rem;
+}
+
+.blog-filter-trigger-caret{
+    color:#64748b;
+    font-size:.75rem;
+    transition:transform .25s;
+}
+
+.blog-filter-trigger[aria-expanded="true"] .blog-filter-trigger-caret{
+    transform:rotate(180deg);
+}
+
+.blog-filter-panel{
+    position:absolute;
+    top:calc(100% + 10px);
+    left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    width:min(90vw,480px);
+    background:rgba(15,23,42,.94);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 20px 45px rgba(0,0,0,.65);
+    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease, visibility 0s .2s;
+    z-index:20;
+}
+
+.blog-filter-panel.open{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0);
+    transition:opacity .2s ease, transform .2s ease;
+}
+
+.blog-filter-group + .blog-filter-group{
+    margin-top:16px;
+}
+
+.blog-filter-group-label{
+    display:block;
+    color:#64748b;
+    font-size:.75rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:8px;
+}
+
+.blog-filter-pills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.blog-filter-pill{
+    border:1px solid rgba(255,255,255,.08);
+    background:#020617;
+    color:#94a3b8;
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:.85rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.blog-filter-pill:hover{
+    border-color:rgba(96,165,250,.4);
+    color:#e5e7eb;
+}
+
+.blog-filter-pill.active{
+    background:rgba(96,165,250,.15);
+    border-color:#60a5fa;
+    color:#60a5fa;
 }
 
 .blog-img{
@@ -619,7 +748,11 @@ h1{
 .summary{
     color:#94a3b8;
     margin:8px 0;
-    font-size:.95rem;
+    font-size:.9rem;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
 }
 
 .tags{
@@ -829,6 +962,29 @@ footer{
     font-size:1rem;
     line-height:1;
     padding:0;
+}
+
+.admin-tag-suggestions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+}
+
+.admin-tag-suggestion-chip{
+    border:1px dashed rgba(255,255,255,.15);
+    background:transparent;
+    color:#64748b;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:.8rem;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.admin-tag-suggestion-chip:hover{
+    border-color:#60a5fa;
+    color:#60a5fa;
 }
 
 .admin-img-preview{
