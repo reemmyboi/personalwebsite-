@@ -273,6 +273,15 @@ h1{
 
 /* Blog */
    /* BLOG FIXED STYLES */
+/* wraps the visible card content (image/title/summary/tags) in a real
+   link to the post's standalone page -- .full-content stays a sibling
+   outside this, never nested inside it (see buildBlogPreviewHtml) */
+.blog-preview-link{
+    display:block;
+    color:inherit;
+    text-decoration:none;
+}
+
 .blog-preview{
     background:linear-gradient(145deg,#020617,#020617,#0f172a);
     border-radius:16px;
@@ -310,6 +319,9 @@ h1{
     background:linear-gradient(120deg,transparent,rgba(96,165,250,.15),transparent);
     opacity:0;
     transition:.4s;
+    /* purely decorative -- must not swallow clicks meant for the real
+       <a class="blog-preview-link"> sitting underneath it */
+    pointer-events:none;
 }
 
 .blog-preview:hover::after{
@@ -368,19 +380,6 @@ h1{
     color:#94a3b8;
     margin-bottom:1rem;
     font-size:.95rem;
-}
-
-/* shareable direct link to this post's standalone (SEO-crawlable) page */
-.permalink{
-    display:inline-block;
-    margin-top:1.5rem;
-    color:#60a5fa;
-    text-decoration:none;
-    font-size:.85rem;
-}
-
-.permalink:hover{
-    text-decoration:underline;
 }
 
 .episode-parent-link a{

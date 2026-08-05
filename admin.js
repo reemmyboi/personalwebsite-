@@ -192,11 +192,17 @@ function buildBlogPreviewHtml(post){
     const headerImgPath = post.headerImgPath || post.previewImgPath;
     // parentSlug is optional -- marks this post as an episode nested under a series post
     const parentAttr = post.parentSlug ? ` data-parent="${escapeAttr(post.parentSlug)}"` : '';
-    return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}"${parentAttr} onclick="openBlog(this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBlog(this)}">
-                <img src="${escapeAttr(post.previewImgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
-                <h2>${escapeHtml(post.title)}</h2>
-                <p class="summary">${escapeHtml(post.summary)}</p>
-                <p class="tags">${escapeHtml(tagsDisplay)}</p>
+    // the visible card is a real link straight to the post's standalone
+    // page (see buildStandalonePostHtml) -- .full-content sits as a
+    // sibling, not nested inside the <a>, since post bodies can contain
+    // their own links and HTML doesn't allow anchors inside anchors
+    return `<div class="blog-preview" data-slug="${escapeAttr(post.slug)}" data-date="${escapeAttr(post.date)}" data-tags="${escapeAttr(tagsAttr)}"${parentAttr}>
+                <a class="blog-preview-link" href="blog/${escapeAttr(post.slug)}/">
+                    <img src="${escapeAttr(post.previewImgPath)}" class="blog-img" alt="${escapeAttr(post.title)}">
+                    <h2>${escapeHtml(post.title)}</h2>
+                    <p class="summary">${escapeHtml(post.summary)}</p>
+                    <p class="tags">${escapeHtml(tagsDisplay)}</p>
+                </a>
 
                 <div class="full-content">
                     <h1>${escapeHtml(post.title)}</h1>
@@ -214,6 +220,48 @@ function buildBlogPreviewHtml(post){
 // actual content sitting directly in the page rather than behind JS state.
 function toRootRelative(path){
     return '../../' + path;
+}
+
+// "Similar Blogs" -- other posts sharing at least one tag, with sibling
+// episodes (same parent series) weighted well above pure tag overlap so
+// they always surface first when they exist. Mirrors the SPA's old
+// renderRelatedPosts() scoring, just computed statically at publish time
+// instead of client-side, since standalone pages carry no JS of their own.
+function buildSimilarBlogsSection(post, allPosts){
+    const ownEpisodeSlugs = allPosts.filter(p => p.parentSlug === post.slug).map(p => p.slug);
+
+    const scored = allPosts
+        .filter(p => {
+            if(p.slug === post.slug) return false; // never itself
+            if(p.slug === post.parentSlug) return false; // already shown via the "Part of" link
+            if(ownEpisodeSlugs.includes(p.slug)) return false; // already shown in this post's own Episode row
+            return true;
+        })
+        .map(p => {
+            const shared = p.tags.filter(t => post.tags.includes(t)).length;
+            const sameParent = !!post.parentSlug && p.parentSlug === post.parentSlug;
+            const score = shared + (sameParent ? 10 : 0);
+            return { post: p, score };
+        })
+        .filter(c => c.score > 0)
+        .sort((a, b) => b.score - a.score || new Date(b.post.date) - new Date(a.post.date))
+        .slice(0, 3);
+
+    if(scored.length === 0) return '';
+
+    const cards = scored.map(({ post: p }) => `
+                <a class="related-post-card" href="../${escapeAttr(p.slug)}/">
+                    <img src="${escapeAttr(toRootRelative(p.previewImgPath))}" class="related-post-img" alt="${escapeAttr(p.title)}">
+                    <h3>${escapeHtml(p.title)}</h3>
+                    <p>${escapeHtml(p.summary)}</p>
+                </a>`).join('');
+
+    return `
+            <div class="related-posts">
+                <h2>Similar Blogs</h2>
+                <div class="related-posts-list">${cards}
+                </div>
+            </div>`;
 }
 
 function buildStandalonePostHtml(post, allPosts){
@@ -234,6 +282,11 @@ function buildStandalonePostHtml(post, allPosts){
                     <span class="episode-number">#${i + 1}</span>
                     <h3>${escapeHtml(ep.title)}</h3>
                 </a>`).join('');
+        // a category post can also carry its own real write-up (not just be
+        // a bare hub) -- show it below the episode list rather than making
+        // it unreachable now that there's no SPA "read the full write-up"
+        // toggle to click through to
+        const rootRelativeBody = post.bodyHtml.replace(/src="photos\//g, 'src="../../photos/');
         bodySection = `
             <div class="category-overview">
                 <img src="${escapeAttr(toRootRelative(post.previewImgPath))}" class="category-overview-img" alt="${escapeAttr(post.title)}">
@@ -244,7 +297,8 @@ function buildStandalonePostHtml(post, allPosts){
                 <h2>Episode</h2>
                 <div class="episode-list">${episodeLinks}
                 </div>
-            </div>`;
+            </div>
+            ${rootRelativeBody}`;
     }else{
         const parentLink = parent
             ? `<p class="episode-parent-link">Part of <a href="../${escapeAttr(parent.slug)}/">${escapeHtml(parent.title)}</a></p>`
@@ -259,6 +313,8 @@ function buildStandalonePostHtml(post, allPosts){
             <img src="${escapeAttr(toRootRelative(headerImgPath))}" class="blog-img-full" alt="${escapeAttr(post.title)}">
             ${rootRelativeBody}`;
     }
+
+    bodySection += buildSimilarBlogsSection(post, allPosts);
 
     return `<!DOCTYPE html>
 <html lang="en">
