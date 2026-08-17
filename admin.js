@@ -33,7 +33,10 @@ function escapeHtml(str){
 }
 
 function escapeAttr(str){
-    return escapeHtml(str).replace(/"/g, '&quot;');
+    // escapes both quote styles even though every attribute in this file is
+    // currently double-quoted -- keeps this safe by construction rather
+    // than by convention, if a future template ever uses single quotes
+    return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ===== SLUGS =====
@@ -329,6 +332,9 @@ function buildStandalonePostHtml(post, allPosts){
 <meta property="og:image" content="${SITE_BASE_URL}${escapeAttr(post.previewImgPath)}">
 <meta property="og:type" content="article">
 <link rel="icon" type="image/png" sizes="32x32" href="../../photos/favicon-32x32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>

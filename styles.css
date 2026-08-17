@@ -1,14 +1,76 @@
+:root{
+    --bg-deep:#020617;
+    --bg-mid:#0f172a;
+    --surface:rgba(15,23,42,.6);
+    --surface-raised:rgba(30,41,59,.6);
+    --border:rgba(255,255,255,.08);
+    --border-strong:rgba(96,165,250,.4);
+    --text:#e5e7eb;
+    --text-muted:#94a3b8;
+    --text-faint:#64748b;
+    --accent:#60a5fa;
+    --accent-soft:rgba(96,165,250,.15);
+    --accent-glow:rgba(96,165,250,.35);
+    --danger:#f87171;
+    --font-display:'Sora',"Segoe UI",sans-serif;
+    --font-body:'Manrope',"Segoe UI",sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --radius-lg:20px;
+    --radius-md:16px;
+    --radius-sm:12px;
+    --radius-pill:999px;
+}
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:"Segoe UI",sans-serif;
+    font-family:var(--font-body);
 }
 
 body{
     min-height:100vh;
-    background:linear-gradient(135deg,#0f172a,#020617,#020617);
-    color:#e5e7eb;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(96,165,250,.09), transparent 45%),
+        radial-gradient(circle at 88% 100%, rgba(96,165,250,.06), transparent 40%),
+        linear-gradient(135deg,var(--bg-mid),var(--bg-deep),var(--bg-deep));
+    color:var(--text);
+    position:relative;
+}
+
+/* subtle grain for tactile depth over the flat gradient mesh above --
+   opacity kept very low so it never competes with contrast/readability */
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    opacity:.035;
+    mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index:0;
+}
+
+h1,h2,h3{
+    font-family:var(--font-display);
+    letter-spacing:-.01em;
+}
+
+/* small uppercase tracked-out label above a page's main heading -- the
+   site's one recurring signature motif, styled like a terminal/HUD
+   readout to echo the tech/gamer identity the rest of the redesign
+   otherwise keeps quiet */
+.kicker{
+    display:block;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:.7rem;
+    letter-spacing:.25em;
+    text-transform:uppercase;
+    color:var(--accent);
+    opacity:.85;
+    margin-bottom:.6rem;
 }
 
 /* Navigation */
@@ -16,18 +78,22 @@ nav{
     display:flex;
     justify-content:center;
     gap:1rem;
-    padding:20px;
+    padding:24px 20px 8px;
     flex-wrap:wrap;
+    position:relative;
+    z-index:1;
 }
 
 nav button, nav a{
-    border:none;
+    border:1px solid var(--border);
     padding:12px 22px;
-    border-radius:12px;
+    border-radius:var(--radius-sm);
     cursor:pointer;
+    font-family:var(--font-display);
     font-weight:600;
-    background:rgba(30,41,59,.6);
-    color:#e5e7eb;
+    font-size:.95rem;
+    background:var(--surface-raised);
+    color:var(--text);
     text-decoration:none;
     display:inline-block;
     -webkit-backdrop-filter:blur(10px);
@@ -39,6 +105,8 @@ nav button, nav a{
 nav button:hover, nav a:hover{
     transform:translateY(-2px);
     background:#1e293b;
+    border-color:var(--border-strong);
+    box-shadow:0 8px 20px rgba(0,0,0,.55), 0 0 0 1px var(--accent-soft);
 }
 
 /* Pages */
@@ -49,6 +117,8 @@ nav button:hover, nav a:hover{
     margin:auto;
     padding:2rem;
     transition:all .3s ease;
+    position:relative;
+    z-index:1;
 }
 
 .page.active{
@@ -63,23 +133,38 @@ nav button:hover, nav a:hover{
 
 /* Cards */
 .card{
-    background:rgba(15,23,42,.6);
+    background:var(--surface);
     -webkit-backdrop-filter:blur(14px);
     backdrop-filter:blur(14px);
-    border-radius:20px;
-    padding:2rem;
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:2.25rem;
     box-shadow:0 10px 25px rgba(0,0,0,.6);
+    position:relative;
+}
+
+/* signature hairline glow along the top edge of every card -- inset from
+   the corners so it never needs overflow:hidden (which would clip the
+   blog filter dropdown panel, a descendant of .card) */
+.card::before{
+    content:"";
+    position:absolute;
+    top:0; left:6%; right:6%;
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
+    pointer-events:none;
 }
 
 h1{
     text-align:center;
     margin-bottom:1rem;
+    font-weight:700;
 }
 
 .subtitle{
     text-align:center;
     margin-bottom:2rem;
-    color:#94a3b8;
+    color:var(--text-muted);
 }
 
 /* Profile */
@@ -90,7 +175,8 @@ h1{
     object-fit:cover;
     display:block;
     margin:0 auto 1rem;
-    border:3px solid #334155;
+    border:3px solid var(--bg-mid);
+    box-shadow:0 0 0 3px var(--border-strong), 0 0 30px rgba(96,165,250,.25);
 }
 
 /* Tree */
@@ -118,20 +204,24 @@ h1{
 .link-node{
     position:absolute;
     text-decoration:none;
-    color:white;
-    background:#1e293b;
+    color:var(--text);
+    background:var(--surface-raised);
     padding:10px 16px;
-    border-radius:20px;
+    border-radius:var(--radius-pill);
+    font-family:var(--font-display);
     font-weight:600;
+    font-size:.9rem;
     box-shadow:0 5px 15px rgba(0,0,0,.6);
     transition:.25s;
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--border);
     white-space:nowrap;
 }
 
 .link-node:hover{
     transform:translate(-50%, -50%) scale(1.08);
     background:#334155;
+    border-color:var(--border-strong);
+    box-shadow:0 8px 20px rgba(0,0,0,.6), 0 0 16px rgba(96,165,250,.3);
 }
 
 /* Tree fruit positions (percentages of the square tree-container) */
@@ -174,11 +264,12 @@ h1{
 /* Skill photo carousel */
 .carousel{
     position:relative;
-    border-radius:14px;
+    border-radius:var(--radius-md);
     overflow:hidden;
-    border:2px dashed rgba(255,255,255,.15);
+    border:1px solid var(--border);
     background:rgba(255,255,255,.02);
     margin-bottom:1.5rem;
+    box-shadow:0 10px 25px rgba(0,0,0,.35);
 }
 
 .carousel-track{
@@ -227,17 +318,6 @@ h1{
     font-size:.85rem;
     text-align:center;
     border-top:1px solid rgba(255,255,255,.08);
-}
-
-.gallery-placeholder-icon{
-    font-size:2.2rem;
-    opacity:.6;
-}
-
-.gallery-placeholder-text{
-    font-size:.9rem;
-    text-align:center;
-    padding:0 8px;
 }
 
 /* Sized identically to .carousel-media (same width basis + aspect-ratio)
@@ -299,17 +379,26 @@ h1{
 }
 
 .blog-preview{
-    background:linear-gradient(145deg,#020617,#020617,#0f172a);
-    border-radius:16px;
+    background:linear-gradient(145deg,var(--bg-deep),var(--bg-deep),var(--bg-mid));
+    border-radius:var(--radius-md);
     padding:14px;
     cursor:pointer;
     transition:all .35s ease;
     overflow:hidden;
     position:relative;
-    border:1px solid rgba(255,255,255,.05);
+    border:1px solid var(--border);
     opacity:0;
     transform:translateY(20px);
     animation:fadeUp .5s forwards;
+}
+
+.blog-preview::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent-glow),transparent);
+    pointer-events:none;
 }
 
 .blog-preview:nth-child(2){ animation-delay:.06s }
@@ -338,7 +427,7 @@ h1{
     content:"";
     position:absolute;
     inset:0;
-    background:linear-gradient(120deg,transparent,rgba(96,165,250,.15),transparent);
+    background:linear-gradient(120deg,transparent,var(--accent-soft),transparent);
     opacity:0;
     transition:.4s;
     /* purely decorative -- must not swallow clicks meant for the real
@@ -399,13 +488,13 @@ h1{
 
 /* "Part of <series>" link shown above an episode post */
 .episode-parent-link{
-    color:#94a3b8;
+    color:var(--text-muted);
     margin-bottom:1rem;
     font-size:.95rem;
 }
 
 .episode-parent-link a{
-    color:#60a5fa;
+    color:var(--accent);
     text-decoration:none;
 }
 
@@ -417,10 +506,10 @@ h1{
    category/series page, above its own full write-up */
 .category-overview{
     text-align:center;
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
     padding:20px;
-    background:rgba(30,41,59,.35);
+    background:var(--surface-raised);
     margin-bottom:1.5rem;
 }
 
@@ -429,7 +518,7 @@ h1{
     max-width:400px;
     aspect-ratio:16/9;
     object-fit:cover;
-    border-radius:12px;
+    border-radius:var(--radius-sm);
     margin:0 auto 14px;
     display:block;
 }
@@ -439,7 +528,7 @@ h1{
 }
 
 .category-overview-summary{
-    color:#94a3b8;
+    color:var(--text-muted);
     font-size:1rem;
     line-height:1.6;
 }
@@ -448,7 +537,7 @@ h1{
 .blog-episodes{
     margin-top:1.5rem;
     padding-top:1.5rem;
-    border-top:1px solid rgba(255,255,255,.08);
+    border-top:1px solid var(--border);
 }
 
 .blog-episodes h2{
@@ -466,18 +555,18 @@ h1{
 .episode-card{
     position:relative;
     aspect-ratio:1/1;
-    border-radius:12px;
+    border-radius:var(--radius-sm);
     overflow:hidden;
     cursor:pointer;
-    background:rgba(30,41,59,.5);
-    border:1px solid rgba(255,255,255,.05);
+    background:var(--surface-raised);
+    border:1px solid var(--border);
     transition:.25s;
 }
 
 .episode-card:hover,
 .episode-card:focus-visible{
     transform:translateY(-4px);
-    box-shadow:0 10px 25px rgba(0,0,0,.6);
+    box-shadow:0 10px 25px rgba(0,0,0,.6), 0 0 0 1px rgba(96,165,250,.2);
     outline:none;
 }
 
@@ -494,11 +583,13 @@ h1{
     top:6px;
     left:6px;
     background:rgba(2,6,23,.75);
-    color:#e5e7eb;
-    font-size:.75rem;
-    font-weight:700;
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:.7rem;
+    font-weight:500;
     padding:2px 8px;
-    border-radius:20px;
+    border-radius:var(--radius-pill);
+    border:1px solid var(--border);
 }
 
 .episode-card h3{
@@ -537,18 +628,18 @@ h1{
 }
 
 .related-post-card{
-    background:rgba(30,41,59,.5);
-    border-radius:14px;
+    background:var(--surface-raised);
+    border-radius:var(--radius-md);
     padding:14px;
     cursor:pointer;
-    border:1px solid rgba(255,255,255,.05);
+    border:1px solid var(--border);
     transition:.25s;
 }
 
 .related-post-card:hover,
 .related-post-card:focus-visible{
     transform:translateY(-4px);
-    box-shadow:0 10px 25px rgba(0,0,0,.6);
+    box-shadow:0 10px 25px rgba(0,0,0,.6), 0 0 0 1px rgba(96,165,250,.2);
     outline:none;
 }
 
@@ -566,31 +657,50 @@ h1{
 }
 
 .related-post-card p{
-    color:#94a3b8;
+    color:var(--text-muted);
     font-size:.85rem;
     line-height:1.5;
     margin:0;
 }
-    .back-btn{
-    border:none;
+.back-btn{
+    border:1px solid var(--border);
     padding:10px 18px;
-    border-radius:10px;
+    border-radius:var(--radius-sm);
     cursor:pointer;
-    background:#1e293b;
-    color:white;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:.9rem;
+    background:var(--surface-raised);
+    color:var(--text);
+    text-decoration:none;
+    display:inline-block;
     margin-bottom:20px;
+    transition:.2s;
+}
+
+/* .back-btn doubles as a real <a> on standalone blog pages -- without this
+   it inherited the browser's default link underline */
+.back-btn:hover{
+    background:#1e293b;
+    border-color:var(--border-strong);
+    transform:translateY(-2px);
 }
 
 .search-bar{
     width:100%;
     padding:14px;
     margin-bottom:15px;
-    border-radius:12px;
-    border:none;
-    background:#020617;
-    color:white;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+    background:var(--bg-deep);
+    color:var(--text);
     outline:none;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+    transition:border-color .2s;
+}
+
+.search-bar:focus{
+    border-color:var(--border-strong);
 }
 
 /* SORT & FILTER DROPDOWN */
@@ -605,14 +715,15 @@ h1{
     display:flex;
     align-items:center;
     gap:10px;
-    border:none;
+    border:1px solid var(--border);
     padding:12px 20px;
-    border-radius:12px;
+    border-radius:var(--radius-sm);
     cursor:pointer;
+    font-family:var(--font-display);
     font-weight:600;
     font-size:.95rem;
-    background:rgba(30,41,59,.6);
-    color:#e5e7eb;
+    background:var(--surface-raised);
+    color:var(--text);
     -webkit-backdrop-filter:blur(10px);
     backdrop-filter:blur(10px);
     box-shadow:0 5px 15px rgba(0,0,0,.5);
@@ -621,21 +732,23 @@ h1{
 
 .blog-filter-trigger:hover{
     background:#1e293b;
+    border-color:var(--border-strong);
     transform:translateY(-2px);
 }
 
 .blog-filter-trigger-icon{
-    color:#60a5fa;
+    color:var(--accent);
 }
 
 #blogFilterState{
-    color:#94a3b8;
+    color:var(--text-muted);
+    font-family:var(--font-body);
     font-weight:400;
     font-size:.85rem;
 }
 
 .blog-filter-trigger-caret{
-    color:#64748b;
+    color:var(--text-faint);
     font-size:.75rem;
     transition:transform .25s;
 }
@@ -651,8 +764,8 @@ h1{
     transform:translateX(-50%) translateY(-8px);
     width:min(90vw,480px);
     background:rgba(15,23,42,.94);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:16px;
+    border:1px solid var(--border);
+    border-radius:var(--radius-md);
     padding:18px;
     box-shadow:0 20px 45px rgba(0,0,0,.65);
     -webkit-backdrop-filter:blur(18px);
@@ -678,10 +791,12 @@ h1{
 
 .blog-filter-group-label{
     display:block;
-    color:#64748b;
-    font-size:.75rem;
+    color:var(--text-faint);
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:.7rem;
     text-transform:uppercase;
-    letter-spacing:.08em;
+    letter-spacing:.12em;
     margin-bottom:8px;
 }
 
@@ -692,11 +807,11 @@ h1{
 }
 
 .blog-filter-pill{
-    border:1px solid rgba(255,255,255,.08);
-    background:#020617;
-    color:#94a3b8;
+    border:1px solid var(--border);
+    background:var(--bg-deep);
+    color:var(--text-muted);
     padding:7px 14px;
-    border-radius:999px;
+    border-radius:var(--radius-pill);
     font-size:.85rem;
     font-weight:600;
     cursor:pointer;
@@ -704,14 +819,14 @@ h1{
 }
 
 .blog-filter-pill:hover{
-    border-color:rgba(96,165,250,.4);
-    color:#e5e7eb;
+    border-color:var(--border-strong);
+    color:var(--text);
 }
 
 .blog-filter-pill.active{
-    background:rgba(96,165,250,.15);
-    border-color:#60a5fa;
-    color:#60a5fa;
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
 }
 
 .blog-img{
@@ -739,14 +854,16 @@ h1{
 }
 
 .tags{
-    color:#60a5fa;
-    font-size:.85rem;
+    color:var(--accent);
+    font-family:var(--font-mono);
+    font-weight:500;
+    font-size:.78rem;
 }
 
 /* shown on an episode's own preview card in the main blog list, since
    episodes now appear there directly instead of only under their series */
 .preview-parent-badge{
-    color:#94a3b8;
+    color:var(--text-muted);
     font-size:.8rem;
     margin-top:4px;
 }

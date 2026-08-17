@@ -19,6 +19,9 @@ if(location.pathname.endsWith('/index.html')){
 <link rel="icon" type="image/png" sizes="32x32" href="photos/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="photos/favicon-16x16.png">
 <link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -38,6 +41,7 @@ if(location.pathname.endsWith('/index.html')){
         <!-- CAT PROFILE -->
         <img src="photos/cat.png" class="profile-pic" alt="Profile">
 
+        <span class="kicker">// media tree</span>
         <h1>Reem's Media Tree</h1>
         <p class="subtitle">
             Greetings to the fine, lovely, viewer reading ✨
@@ -113,6 +117,7 @@ if(location.pathname.endsWith('/index.html')){
 <!-- ABOUT -->
 <section id="about" class="page">
     <div class="card">
+        <span class="kicker">// about me</span>
         <h1>About Me</h1>
 
         <div class="about-content">
@@ -257,49 +262,6 @@ if(location.pathname.endsWith('/index.html')){
             </div>
 
             <p>
-                I also am a amateur gardener, Ive grown very little and know very little to boot but I enjoy learning by trial and error. Here some photos of my sunflowers.
-            </p>
-
-            <!-- Placeholder slides: swap each one's inner content for
-                 <img src="photos/garden-1.jpg" class="carousel-img" alt="Description of the shot"> -->
-            <div class="carousel" role="region" aria-label="Gardening photos" data-interval="4000">
-                <div class="carousel-track">
-                    <div class="carousel-slide">
-                        <div class="carousel-media">
-                            <span class="gallery-placeholder-icon">🌱</span>
-                            <span class="gallery-placeholder-text">Garden photo 1 coming soon</span>
-                        </div>
-                        <span class="carousel-caption">Placeholder</span>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="carousel-media">
-                            <span class="gallery-placeholder-icon">🌱</span>
-                            <span class="gallery-placeholder-text">Garden photo 2 coming soon</span>
-                        </div>
-                        <span class="carousel-caption">Placeholder</span>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="carousel-media">
-                            <span class="gallery-placeholder-icon">🌱</span>
-                            <span class="gallery-placeholder-text">Garden photo 3 coming soon</span>
-                        </div>
-                        <span class="carousel-caption">Placeholder</span>
-                    </div>
-                    <div class="carousel-slide">
-                        <div class="carousel-media">
-                            <span class="gallery-placeholder-icon">🌱</span>
-                            <span class="gallery-placeholder-text">Garden photo 4 coming soon</span>
-                        </div>
-                        <span class="carousel-caption">Placeholder</span>
-                    </div>
-                </div>
-                <div class="carousel-arrow-zone">
-                    <button type="button" class="carousel-arrow carousel-prev" onclick="carouselNav(this.closest('.carousel'), -1)" aria-label="Previous garden photo">‹</button>
-                    <button type="button" class="carousel-arrow carousel-next" onclick="carouselNav(this.closest('.carousel'), 1)" aria-label="Next garden photo">›</button>
-                </div>
-            </div>
-
-            <p>
                 Appreciate you taking the time to check this out -Reem
             </p>
         </div>
@@ -309,6 +271,7 @@ if(location.pathname.endsWith('/index.html')){
 <!-- BLOGS -->
 <section id="blogs" class="page">
     <div class="card">
+        <span class="kicker">// blog archive</span>
         <h1>Blogs</h1>
 
         <p class="subtitle">
