@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>REEMMY</title>
 <script>
-// GitHub Pages serves this file for the bare folder URL too, so anyone who
-// lands here via an old link/bookmark with "index.html" still typed on the
-// end gets it silently tidied out of the address bar -- no redirect, no
-// reload, nothing for a search engine or share link to trip over.
 if(location.pathname.endsWith('/index.html')){
     const cleanPath = location.pathname.slice(0, -'index.html'.length) + location.search + location.hash;
     history.replaceState(null, '', cleanPath);
@@ -34,11 +30,9 @@ if(location.pathname.endsWith('/index.html')){
     <button onclick="showPage('blogs')">📰 Blogs</button>
 </nav>
 
-<!-- MEDIA TREE -->
 <section id="media" class="page active">
     <div class="card">
 
-        <!-- CAT PROFILE -->
         <img src="photos/cat.png" class="profile-pic" alt="Profile">
 
         <span class="kicker">// media tree</span>
@@ -50,10 +44,8 @@ if(location.pathname.endsWith('/index.html')){
 
         <div class="tree-container">
 
-            <!-- TREE IMAGE -->
             <img src="photos/image.png" class="tree-img" alt="Tree illustration linking to Reem's social media profiles">
 
-           <!-- TOP SPLIT (main canopy fork) -->
 <a href="https://www.instagram.com/reemmydevs/"
    target="_blank"
    rel="noopener noreferrer"
@@ -68,7 +60,6 @@ if(location.pathname.endsWith('/index.html')){
 </a>
 
 
-<!-- UPPER BRANCH INTERSECTIONS -->
 <a href="https://www.youtube.com/channel/UCuhYpmyhSwhuAVxGsIc_nqg"
    target="_blank"
    rel="noopener noreferrer"
@@ -84,7 +75,6 @@ if(location.pathname.endsWith('/index.html')){
 </a>
 
 
-<!-- MID BRANCH SPLITS -->
 <a href="https://discord.gg/GuwnDvrFDR"
    target="_blank"
    rel="noopener noreferrer"
@@ -100,7 +90,6 @@ if(location.pathname.endsWith('/index.html')){
 </a>
 
 
-<!-- LOWER BRANCH TIP (fruit) -->
 <a href="https://throne.com/reemmy"
    target="_blank"
    rel="noopener noreferrer"
@@ -114,7 +103,6 @@ if(location.pathname.endsWith('/index.html')){
     </div>
 </section>
 
-<!-- ABOUT -->
 <section id="about" class="page">
     <div class="card">
         <span class="kicker">// about me</span>
@@ -128,7 +116,7 @@ if(location.pathname.endsWith('/index.html')){
             </p>
 
             <p>
-                One of my hobbies is putting together computers, I've built a couple for myself and other so far. Heres some of the ones I made. <weak>I can put together builds for you if you hit me up</weak> 
+                One of my hobbies is putting together computers, I've built a couple for myself and other so far. Heres some of the ones I made. <weak>I can put together builds for you if you hit me up</weak>
             </p>
 
             <div class="carousel" role="region" aria-label="PC build photos" data-interval="4000">
@@ -268,7 +256,6 @@ if(location.pathname.endsWith('/index.html')){
     </div>
 </section>
 
-<!-- BLOGS -->
 <section id="blogs" class="page">
     <div class="card">
         <span class="kicker">// blog archive</span>
@@ -278,8 +265,7 @@ if(location.pathname.endsWith('/index.html')){
             Thoughts, updates, and random stuff ✨
         </p>
 
-        <!-- SEARCH -->
-        <input 
+        <input
 type="text"
 id="searchBar"
 class="search-bar"
@@ -287,7 +273,6 @@ placeholder="🔍 Search blogs..."
 oninput="searchBlogs()"
 >
 
-        <!-- CONTROLS -->
         <div class="blog-toolbar">
             <button type="button" class="blog-filter-trigger" id="blogFilterTrigger" aria-expanded="false" aria-controls="blogFilterPanel" onclick="toggleFilterMenu()">
                 <span class="blog-filter-trigger-icon">⇅</span>
@@ -305,16 +290,11 @@ oninput="searchBlogs()"
                 </div>
                 <div class="blog-filter-group">
                     <span class="blog-filter-group-label">Filter by tag</span>
-                    <!-- generated at load by renderTagButtons(): an "All" pill plus one per tag actually in use -->
                     <div class="blog-filter-pills" id="tagButtons"></div>
                 </div>
             </div>
         </div>
 
-        <!-- BLOG LIST -->
-        <!-- New posts are inserted right after ADMIN:BLOG_LIST_START by admin.html.
-             Do not remove these two comments -- admin.html relies on them to find
-             where to splice post markup into this file. -->
         <div id="blogList">
             <!-- ADMIN:BLOG_LIST_START -->
 
@@ -348,10 +328,6 @@ oninput="searchBlogs()"
                 </div>
             </div>
 
-            <!-- BLOG 1 -->
-
-
-            <!-- BLOG 2 -->
             <div class="blog-preview" data-slug="show-ive-been-watching" data-date="2026-07-28" data-tags="television anime">
                 <a class="blog-preview-link" href="blog/show-ive-been-watching/">
                     <img src="photos/show-ive-been-watching-1785287549736.jpg" class="blog-img" alt="An overall on GoSIck">
@@ -372,7 +348,6 @@ oninput="searchBlogs()"
     </div>
 </section>
 <script>
-// SKILL PHOTO CAROUSELS
 function carouselGoTo(carousel, index){
     const track = carousel.querySelector('.carousel-track');
     const slideCount = carousel.querySelectorAll('.carousel-slide').length;
@@ -396,15 +371,11 @@ function carouselNav(carousel, direction){
     const current = parseInt(carousel.dataset.index, 10) || 0;
     carouselGoTo(carousel, current + direction);
 
-    // pause auto-advance, resume after 10s of no interaction
     clearInterval(carousel._autoTimer);
     clearTimeout(carousel._resumeTimer);
     carousel._resumeTimer = setTimeout(() => carouselStartAuto(carousel), 10000);
 }
 
-// shuffle each carousel's slides (image + its caption move together
-// since they're both inside the same .carousel-slide) so the order
-// is different every time the page loads
 function shuffleSlides(carousel){
     const track = carousel.querySelector('.carousel-track');
     const slides = Array.from(track.children);
@@ -425,7 +396,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
 </script>
 
 <script>
-// TIKTOK EASTER EGG
 (function(){
     const btn = document.getElementById('tiktokBtn');
     const message = document.getElementById('tiktokMessage');
@@ -437,11 +407,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
     let poofCtx = null;
     let poofReverbImpulse = null;
 
-    // a short synthesized reverb tail (exponentially-decaying stereo noise
-    // used as a convolution impulse response) -- built once and reused.
-    // This one thing does more to remove the "cheap/dry" quality than any
-    // amount of oscillator tweaking: real produced SFX almost never sit in
-    // total silence, they have a little bit of space around them.
     function getPoofReverbImpulse(ctx){
         if(!poofReverbImpulse){
             const duration = 0.9, decay = 2.6;
@@ -458,14 +423,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
         return poofReverbImpulse;
     }
 
-    // a quiet synthesized "poof": a bubble-pop blip (rising pitch that
-    // cuts sharply, with a tiny click at the pop) layered with a small
-    // cluster of bright sparkle tones that fades in alongside the pop and
-    // then cuts off abruptly, like the object just vanished rather than
-    // the sound naturally decaying away. Everything is layered with a
-    // couple of harmonics (not bare sine waves), spread across the stereo
-    // field, and passed through a touch of soft saturation + reverb so it
-    // reads as produced rather than a raw oscillator beep.
     function playPoofSound(){
         try{
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -475,9 +432,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
 
             const now = poofCtx.currentTime;
 
-            // master bus -- everything routes through here for shared
-            // warmth (gentle tanh saturation) before splitting to a dry
-            // path and a low-level reverb send
             const master = poofCtx.createGain();
             master.gain.value = 1;
 
@@ -491,7 +445,7 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             saturation.oversample = '2x';
 
             const reverbSend = poofCtx.createGain();
-            reverbSend.gain.value = 0.16; // subtle -- adds space, not a cave
+            reverbSend.gain.value = 0.16;
 
             const convolver = poofCtx.createConvolver();
             convolver.buffer = getPoofReverbImpulse(poofCtx);
@@ -502,9 +456,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             reverbSend.connect(convolver);
             convolver.connect(poofCtx.destination);
 
-            // --- bubble pop: layered fundamental + a triangle partial an
-            // octave up (for body/edge) + a brief low sub (for weight),
-            // quick rising pitch that cuts sharply ---
             const popFund = poofCtx.createOscillator();
             popFund.type = 'sine';
             popFund.frequency.setValueAtTime(480, now);
@@ -541,10 +492,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             popPartial.start(now); popPartial.stop(now + 0.07);
             popSub.start(now); popSub.stop(now + 0.06);
 
-            // a tiny shaped-noise click right at the pop moment for
-            // percussive "snap" -- bandpassed (a defined center + Q)
-            // instead of just highpassed, so it reads as a clean
-            // transient rather than broadband hiss
             const clickBuffer = poofCtx.createBuffer(1, Math.floor(poofCtx.sampleRate * 0.02), poofCtx.sampleRate);
             const clickData = clickBuffer.getChannelData(0);
             for(let i = 0; i < clickData.length; i++){
@@ -569,14 +516,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             click.start(now + 0.04);
             click.stop(now + 0.065);
 
-            // --- sparkle: a rapid, irregular scatter of tiny bright noise
-            // crackles -- a cymbal's sizzle broken into audible individual
-            // pops, with the same crackling, unevenly-timed rhythm as pop
-            // rocks candy going off in your mouth. Each crackle is its own
-            // short burst of bandpassed noise (bright/metallic, not a
-            // tonal note), randomly pitched, panned, and timed, with gaps
-            // that widen toward the end so it naturally fizzles out
-            // instead of stopping on a beat. Starts a touch after the pop.
             const sparkleStart = now + 0.03;
             const sparkleWindow = 0.2;
             const sparkleMaster = poofCtx.createGain();
@@ -587,15 +526,11 @@ document.querySelectorAll('.carousel').forEach(carousel => {
             let crackleT = 0;
             for(let i = 0; i < crackleCount; i++){
                 const progress = i / crackleCount;
-                // tighter, faster gaps than a soft candy crackle -- more of
-                // a rapid-fire burst, still widening a bit toward the end
                 const gap = 0.002 + Math.random() * 0.013 * (0.35 + progress);
                 crackleT += gap;
                 if(crackleT > sparkleWindow) break;
 
                 const popTime = sparkleStart + crackleT;
-                // shorter and crisper per-pop than before -- a sharp
-                // "tick" rather than a soft crackle
                 const dur = 0.004 + Math.random() * 0.004;
 
                 const buf = poofCtx.createBuffer(1, Math.max(1, Math.floor(poofCtx.sampleRate * dur)), poofCtx.sampleRate);
@@ -607,16 +542,12 @@ document.querySelectorAll('.carousel').forEach(carousel => {
                 const crackle = poofCtx.createBufferSource();
                 crackle.buffer = buf;
 
-                // brighter and higher-Q than before -- a sharper "snap"
-                // per pop, more firework-crackle than soft candy fizz
                 const crackleFilter = poofCtx.createBiquadFilter();
                 crackleFilter.type = 'bandpass';
                 crackleFilter.frequency.value = 5500 + Math.random() * 4500;
                 crackleFilter.Q.value = 2 + Math.random() * 2;
 
                 const crackleGain = poofCtx.createGain();
-                // wider amplitude variance -- some pops noticeably louder
-                // than others, like an uneven shower of firework crackle
                 const peak = 0.016 + Math.random() * 0.028;
                 crackleGain.gain.setValueAtTime(peak, popTime);
                 crackleGain.gain.exponentialRampToValueAtTime(0.0001, popTime + dur);
@@ -633,7 +564,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
                 crackle.stop(popTime + dur + 0.005);
             }
         }catch(e){
-            // sound is a nice-to-have here, never let it break the easter egg
         }
     }
 
@@ -645,9 +575,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
         btn.style.transform = 'translate(-50%, -50%)';
     }
 
-    // shrink relative to whatever size it's currently rendering at, so it
-    // shrinks noticeably whether starting from the desktop tree or the
-    // mobile stacked-list size
     function shrinkOneStage(){
         const style = getComputedStyle(btn);
         const shrink = (value) => (parseFloat(value) * 0.78) + 'px';
@@ -659,7 +586,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
         btn.style.paddingRight = shrink(style.paddingRight);
     }
 
-    // desktop hover: give a brief moment to click before it flees
     btn.addEventListener('mouseenter', () => {
         if(catches >= maxCatches) return;
         clearTimeout(fleeTimer);
@@ -670,7 +596,6 @@ document.querySelectorAll('.carousel').forEach(carousel => {
         clearTimeout(fleeTimer);
     });
 
-    // if it does get caught: shrink and relocate, up to 3 times
     btn.addEventListener('click', (e) => {
         e.preventDefault();
         clearTimeout(fleeTimer);
@@ -702,7 +627,6 @@ function showPage(pageId){
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
 
-        // reset styles that may break visibility
         page.style.opacity = 1;
         page.style.transform = "none";
     });
@@ -712,16 +636,11 @@ function showPage(pageId){
     window.scrollTo({ top: 0, behavior: "instant" });
 }
 
-// jump straight to a section when arriving via a link like
-// "index.html#blogs" -- used by the standalone blog pages' nav and
-// "Back to site" button so leaving a post returns you to the blog list
-// instead of always landing back on the default Media Tree section
 if(location.hash === '#blogs' || location.hash === '#about'){
     showPage(location.hash.slice(1));
 }
 </script>
 <script>
-// SEARCH + FILTER (combined so neither one clobbers the other's state)
 let activeCategory = 'all';
 let activeSort = 'new';
 
@@ -738,7 +657,6 @@ function filterBlogs(category){
     applyBlogVisibility();
 }
 
-// SORT + FILTER DROPDOWN
 function toggleFilterMenu(force){
     const panel = document.getElementById('blogFilterPanel');
     const trigger = document.getElementById('blogFilterTrigger');
@@ -766,9 +684,6 @@ function updateFilterTriggerState(){
 function applyBlogVisibility(){
     const input = document.getElementById('searchBar').value.toLowerCase();
 
-    // episodes now show on the main list alongside everything else (they
-    // used to be hidden, only reachable through their series page) -- they
-    // go through the exact same search/tag matching as any other post
     document.querySelectorAll('.blog-preview').forEach(blog=>{
         const text = blog.innerText.toLowerCase();
         const matchesSearch = text.includes(input);
@@ -778,7 +693,6 @@ function applyBlogVisibility(){
     });
 }
 
-// SORT
 function sortBlogs(type){
     activeSort = type;
     const container = document.getElementById('blogList');
@@ -798,9 +712,6 @@ function sortBlogs(type){
     updateFilterTriggerState();
 }
 
-// TAG PILLS (generated from whatever tags are actually in use, so
-// admin.html never has to touch this file's button markup when a new
-// tag shows up on a post)
 function renderTagButtons(){
     const tags = new Set();
     document.querySelectorAll('.blog-preview').forEach(blog=>{
@@ -829,13 +740,9 @@ function renderTagButtons(){
     });
 }
 
-// episodes now show on the main list alongside everything else -- this
-// adds a small "Part of <series>" badge onto each episode's own preview
-// card so it still reads clearly as part of a series while browsing,
-// instead of looking like an unrelated standalone post
 function renderEpisodeBadges(){
     document.querySelectorAll('.blog-preview[data-parent]').forEach(blog=>{
-        if(blog.querySelector('.preview-parent-badge')) return; // don't double up on repeat calls
+        if(blog.querySelector('.preview-parent-badge')) return;
         const parentSlug = blog.dataset.parent;
         const parent = document.querySelector('.blog-preview[data-slug="' + CSS.escape(parentSlug) + '"]');
         if(!parent) return;
@@ -850,7 +757,7 @@ function renderEpisodeBadges(){
 
 renderTagButtons();
 renderEpisodeBadges();
-sortBlogs('new'); // most-recent-first by default, now including episodes
+sortBlogs('new');
 applyBlogVisibility();
 </script>
 </body>
